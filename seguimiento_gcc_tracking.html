@@ -1,10 +1,692 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GCC Tracking · Seguimiento</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>*{box-sizing:border-box}body{margin:0;font:16px system-ui,Arial;background:#091b2c;color:#edf7ff}.wrap{max-width:900px;margin:auto;padding:18px}header{background:#123b5b;padding:22px;border-radius:16px;margin-bottom:16px}h1{font-size:clamp(22px,4vw,32px);margin:0}header p{margin:7px 0 0;color:#b9d7e8}.card{background:#123049;border:1px solid #335b73;border-radius:16px;padding:18px;margin-bottom:14px}#map{height:min(65vh,560px);min-height:340px;border-radius:12px;background:#cddbe3}#status{font-weight:700}.muted{color:#b9d7e8}button{background:#1ebce0;border:0;padding:11px 17px;border-radius:10px;font-weight:700;cursor:pointer}.row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0}.truck{font-size:28px;text-shadow:0 2px 3px #fff}</style></head><body><main class="wrap"><header><h1>🚚 Gestión Center Cloud</h1><p>TRACKING · Seguimiento de entrega</p></header><section class="card"><div class="row"><span id="status">Preparando seguimiento…</span><button id="refresh">Actualizar</button></div><div class="row muted"><span id="updated">Última posición: —</span><span id="accuracy">Precisión: —</span></div></section><section class="card"><div id="map"></div></section><p class="muted">La posición puede retrasarse si el chofer pierde señal, bloquea el teléfono o deja el navegador en segundo plano. El mapa no representa una ubicación en vivo cuando no llegan datos nuevos.</p></main><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
-const SUPABASE_URL='https://fqlvmijuolgacdqlavfk.supabase.co';
-const KEY='sb_publishable_ydAZAqaaxAVqrg7HKjUFvQ_4RfiyfqW';
-const client=window.supabase.createClient(SUPABASE_URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
-const map=L.map('map').setView([-34.6,-58.45],10);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
-const icon=L.divIcon({html:'<span class="truck">🚚</span>',className:'',iconSize:[36,36],iconAnchor:[18,18]});let marker=null,last=null;
-const status=document.getElementById('status'),updated=document.getElementById('updated'),accuracy=document.getElementById('accuracy');
-const token=new URLSearchParams(location.search).get('token');
-if(!token||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)){status.textContent='Enlace inválido: falta un token de seguimiento válido.';document.getElementById('refresh').disabled=true;}else{async function refresh(){try{const {data,error}=await client.rpc('tracking_consultar_posicion',{p_token:token});if(error)throw error;if(!data||!data.length){status.textContent='Sin posición disponible: el viaje puede no estar activo o el enlace haber vencido.';return;}const p=data[0];if(!Number.isFinite(p.latitud)||!Number.isFinite(p.longitud))throw Error('Coordenadas inválidas');const pos=[p.latitud,p.longitud];if(!marker){marker=L.marker(pos,{icon}).addTo(map);map.setView(pos,15)}else{marker.setLatLng(pos)}last=new Date(p.fecha);const age=Math.max(0,Math.round((Date.now()-last.getTime())/1000));status.textContent=age>60?'⚠️ Ubicación desactualizada':'🟢 Vehículo en reparto';updated.textContent='Última posición: '+last.toLocaleString('es-AR')+' (hace '+age+' s)';accuracy.textContent='Precisión: '+(p.precision_metros==null?'—':Math.round(p.precision_metros)+' m');}catch(e){status.textContent='Error de consulta: '+e.message;}}document.getElementById('refresh').onclick=refresh;refresh();setInterval(refresh,10000);}
-</script></body></html>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#071827">
+
+<title>GCC Tracking | Seguimiento de entrega</title>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, Arial, sans-serif;
+  background: #071827;
+  color: #edf7ff;
+}
+
+.wrap {
+  max-width: 1050px;
+  margin: auto;
+  padding: 15px;
+}
+
+header {
+  background: linear-gradient(135deg,#123f60,#071e33);
+  border: 1px solid #315b77;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 15px;
+}
+
+.brand {
+  font-size: 13px;
+  color: #8bdff1;
+  letter-spacing: 2px;
+  font-weight: bold;
+}
+
+h1 {
+  font-size: clamp(25px,5vw,36px);
+  margin: 10px 0;
+}
+
+.subtitle {
+  color: #bed8e8;
+  margin: 0;
+}
+
+.card {
+  background: #112e45;
+  border: 1px solid #31566e;
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 15px;
+}
+
+.status {
+  font-size: 19px;
+  font-weight: bold;
+}
+
+.status.ok {
+  color: #4ee5a2;
+}
+
+.status.warning {
+  color: #ffcf70;
+}
+
+.status.error {
+  color: #ff8b8b;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.info {
+  background: #0a2236;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.info-label {
+  color: #9cbdd1;
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+
+.info-value {
+  font-size: 16px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+#map {
+  height: 470px;
+  border-radius: 14px;
+  background: #cddbe3;
+  z-index: 1;
+}
+
+.map-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 14px;
+}
+
+button {
+  background: #21c2e4;
+  border: none;
+  border-radius: 12px;
+  padding: 13px 20px;
+  font-size: 15px;
+  font-weight: bold;
+  color: #062235;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.muted {
+  color: #9cbdd1;
+  font-size: 13px;
+}
+
+.truck-icon {
+  font-size: 34px;
+  line-height: 40px;
+  filter: drop-shadow(0 3px 3px #222);
+}
+
+.destination {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 8px 0;
+}
+
+.eta {
+  font-size: 28px;
+  color: #55dff0;
+  font-weight: 800;
+  margin: 8px 0;
+}
+
+.footer {
+  text-align: center;
+  color: #7da4bd;
+  font-size: 12px;
+  padding: 18px;
+}
+
+@media(max-width:600px) {
+
+  .wrap {
+    padding: 10px;
+  }
+
+  header {
+    padding: 20px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  #map {
+    height: 55vh;
+    min-height: 340px;
+  }
+
+  .info-grid {
+    gap: 8px;
+  }
+
+  .info {
+    padding: 11px;
+  }
+
+  .info-value {
+    font-size: 14px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<main class="wrap">
+
+<header>
+  <div class="brand">GESTIÓN CENTER CLOUD</div>
+
+  <h1>🚚 Seguimiento de entrega</h1>
+
+  <p class="subtitle">
+    Consultá la ubicación de nuestro vehículo en tiempo real.
+  </p>
+</header>
+
+<section class="card">
+
+  <div id="status" class="status">
+    Preparando seguimiento...
+  </div>
+
+  <div class="info-grid">
+
+    <div class="info">
+      <div class="info-label">🚚 VEHÍCULO</div>
+      <div class="info-value" id="vehicle">
+        En seguimiento
+      </div>
+    </div>
+
+    <div class="info">
+      <div class="info-label">📡 CONEXIÓN</div>
+      <div class="info-value" id="connection">
+        Consultando...
+      </div>
+    </div>
+
+    <div class="info">
+      <div class="info-label">🕒 ÚLTIMA POSICIÓN</div>
+      <div class="info-value" id="updated">
+        —
+      </div>
+    </div>
+
+    <div class="info">
+      <div class="info-label">🎯 PRECISIÓN GPS</div>
+      <div class="info-value" id="accuracy">
+        —
+      </div>
+    </div>
+
+  </div>
+
+  <div class="actions">
+    <span class="muted">
+      Actualización automática cada 10 segundos
+    </span>
+
+    <button id="refresh">
+      🔄 Actualizar
+    </button>
+  </div>
+
+</section>
+
+<section class="card">
+
+  <div class="map-title">
+    📍 Ubicación del vehículo
+  </div>
+
+  <div id="map"></div>
+
+</section>
+
+<section class="card">
+
+  <div class="map-title">
+    🏠 Tu entrega
+  </div>
+
+  <div class="info-label">
+    DIRECCIÓN DE DESTINO
+  </div>
+
+  <div class="destination" id="destination">
+    Pendiente de vincular con el pedido
+  </div>
+
+  <hr style="border:0;border-top:1px solid #31566e;margin:18px 0">
+
+  <div class="info-label">
+    TIEMPO ESTIMADO DE LLEGADA
+  </div>
+
+  <div class="eta" id="eta">
+    Próximamente
+  </div>
+
+  <div class="muted" id="routeInfo">
+    El cálculo de ruta estará disponible cuando
+    se vincule la dirección de entrega.
+  </div>
+
+</section>
+
+<section class="card">
+
+  <div class="map-title">
+    ℹ️ Información del seguimiento
+  </div>
+
+  <p class="muted">
+    La ubicación se actualiza mientras el vehículo
+    transmite datos GPS y mantiene conexión.
+  </p>
+
+  <p class="muted">
+    Si el vehículo pierde señal, se mostrará
+    la última posición recibida.
+  </p>
+
+  <p class="muted">
+    Este enlace es personal y tiene una
+    vigencia limitada.
+  </p>
+
+</section>
+
+<div class="footer">
+  GCC Tracking · Gestión Center Cloud
+  <br>
+  Tecnología de seguimiento de entregas
+</div>
+
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+"use strict";
+
+// ======================================================
+// CONFIGURACIÓN SUPABASE
+// ======================================================
+
+const SUPABASE_URL =
+  "https://fqlvmijuolgacdqlavfk.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_ydAZAqaaxAVqrg7HKjUFvQ_4RfiyfqW";
+
+const client = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY,
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  }
+);
+
+// ======================================================
+// ELEMENTOS
+// ======================================================
+
+const statusEl = document.getElementById("status");
+const updatedEl = document.getElementById("updated");
+const accuracyEl = document.getElementById("accuracy");
+const connectionEl = document.getElementById("connection");
+const refreshButton = document.getElementById("refresh");
+
+const token = new URLSearchParams(
+  window.location.search
+).get("token");
+
+const tokenValido =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  .test(token || "");
+
+// ======================================================
+// MAPA
+// ======================================================
+
+const map = L.map("map").setView(
+  [-34.6, -58.45],
+  10
+);
+
+L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors"
+  }
+).addTo(map);
+
+const truckIcon = L.divIcon({
+  html: '<span class="truck-icon">🚚</span>',
+  className: "",
+  iconSize: [40, 40],
+  iconAnchor: [20, 20]
+});
+
+let truckMarker = null;
+let lastPosition = null;
+let lastPositionTime = null;
+let consulting = false;
+let accessEnded = false;
+
+// ======================================================
+// FUNCIONES VISUALES
+// ======================================================
+
+function setStatus(message, type = "") {
+  statusEl.textContent = message;
+  statusEl.className = "status " + type;
+}
+
+function formatArgentina(date) {
+  return new Intl.DateTimeFormat("es-AR", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).format(date);
+}
+
+function clearPosition() {
+
+  if (truckMarker) {
+    map.removeLayer(truckMarker);
+    truckMarker = null;
+  }
+
+  lastPosition = null;
+  lastPositionTime = null;
+
+  updatedEl.textContent = "—";
+  accuracyEl.textContent = "—";
+}
+
+function endAccess() {
+
+  accessEnded = true;
+
+  clearPosition();
+
+  connectionEl.textContent = "No disponible";
+
+  setStatus(
+    "🔒 Seguimiento no disponible o finalizado",
+    "warning"
+  );
+
+  refreshButton.disabled = true;
+}
+
+// ======================================================
+// ESTADO DE LA POSICIÓN
+// ======================================================
+
+function updatePositionAge() {
+
+  if (!lastPositionTime || accessEnded) {
+    return;
+  }
+
+  const seconds = Math.max(
+    0,
+    Math.round(
+      (Date.now() - lastPositionTime.getTime()) / 1000
+    )
+  );
+
+  updatedEl.textContent =
+    formatArgentina(lastPositionTime) +
+    " · hace " + seconds + " s";
+
+  if (seconds > 60) {
+
+    setStatus(
+      "⚠️ Ubicación desactualizada",
+      "warning"
+    );
+
+    connectionEl.textContent = "Sin posición reciente";
+
+  } else {
+
+    setStatus(
+      "🟢 Vehículo en reparto",
+      "ok"
+    );
+
+    connectionEl.textContent = "Posición reciente";
+  }
+}
+
+// ======================================================
+// CONSULTAR SUPABASE
+// ======================================================
+
+async function refreshPosition() {
+
+  if (!tokenValido || consulting || accessEnded) {
+    return;
+  }
+
+  consulting = true;
+  refreshButton.disabled = true;
+
+  try {
+
+    const { data, error } = await client.rpc(
+      "tracking_consultar_posicion",
+      {
+        p_token: token
+      }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    // La función actual devuelve una lista de posiciones.
+    // Si no devuelve ninguna, no mostramos datos anteriores.
+
+    const positions = Array.isArray(data)
+      ? data
+      : (data ? [data] : []);
+
+    if (positions.length === 0) {
+
+      endAccess();
+      return;
+    }
+
+    const p = positions[0];
+
+    const lat = Number(p.latitud);
+    const lng = Number(p.longitud);
+
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      lat < -90 ||
+      lat > 90 ||
+      lng < -180 ||
+      lng > 180
+    ) {
+      throw new Error("Coordenadas inválidas");
+    }
+
+    const positionDate = new Date(p.fecha);
+
+    if (!Number.isFinite(positionDate.getTime())) {
+      throw new Error("Fecha de posición inválida");
+    }
+
+    const position = [lat, lng];
+
+    const positionChanged =
+      !lastPosition ||
+      lastPosition[0] !== lat ||
+      lastPosition[1] !== lng;
+
+    if (!truckMarker) {
+
+      truckMarker = L.marker(
+        position,
+        { icon: truckIcon }
+      ).addTo(map);
+
+      map.setView(position, 16);
+
+    } else {
+
+      truckMarker.setLatLng(position);
+
+      if (positionChanged) {
+        map.panTo(position);
+      }
+    }
+
+    lastPosition = position;
+    lastPositionTime = positionDate;
+
+    const precision =
+      p.precision_metros == null
+        ? null
+        : Number(p.precision_metros);
+
+    accuracyEl.textContent =
+      precision == null || !Number.isFinite(precision)
+        ? "—"
+        : Math.round(precision) + " metros";
+
+    updatePositionAge();
+
+  } catch (error) {
+
+    console.error(
+      "GCC Tracking - error de consulta:",
+      error
+    );
+
+    connectionEl.textContent = "Error de consulta";
+
+    setStatus(
+      "⚠️ No se pudo actualizar la ubicación",
+      "warning"
+    );
+
+    // Ante un error temporal conservamos la última
+    // posición, pero no la presentamos como actual.
+
+  } finally {
+
+    consulting = false;
+
+    if (!accessEnded) {
+      refreshButton.disabled = false;
+    }
+  }
+}
+
+// ======================================================
+// INICIO
+// ======================================================
+
+if (!tokenValido) {
+
+  endAccess();
+
+  setStatus(
+    "🔒 Enlace de seguimiento inválido",
+    "error"
+  );
+
+} else {
+
+  refreshButton.addEventListener(
+    "click",
+    refreshPosition
+  );
+
+  refreshPosition();
+
+  setInterval(
+    refreshPosition,
+    10000
+  );
+
+  setInterval(
+    updatePositionAge,
+    1000
+  );
+
+  document.addEventListener(
+    "visibilitychange",
+    function() {
+
+      if (!document.hidden) {
+        refreshPosition();
+      }
+    }
+  );
+}
+
+</script>
+
+</body>
+</html>
