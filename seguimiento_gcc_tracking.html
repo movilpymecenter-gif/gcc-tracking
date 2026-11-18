@@ -13,197 +13,191 @@
 >
 
 <style>
-* {
-  box-sizing: border-box;
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:system-ui,Arial,sans-serif;
+  background:#071827;
+  color:#edf7ff;
 }
 
-body {
-  margin: 0;
-  font-family: system-ui, Arial, sans-serif;
-  background: #071827;
-  color: #edf7ff;
+.wrap{
+  max-width:1050px;
+  margin:auto;
+  padding:14px;
 }
 
-.wrap {
-  max-width: 1050px;
-  margin: auto;
-  padding: 15px;
+header{
+  background:linear-gradient(135deg,#154768,#071d31);
+  border:1px solid #315b77;
+  border-radius:20px;
+  padding:24px;
+  margin-bottom:15px;
 }
 
-header {
-  background: linear-gradient(135deg,#123f60,#071e33);
-  border: 1px solid #315b77;
-  border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 15px;
+.brand{
+  font-size:13px;
+  color:#8bdff1;
+  letter-spacing:2px;
+  font-weight:800;
 }
 
-.brand {
-  font-size: 13px;
-  color: #8bdff1;
-  letter-spacing: 2px;
-  font-weight: bold;
+h1{
+  font-size:clamp(25px,5vw,36px);
+  margin:10px 0;
 }
 
-h1 {
-  font-size: clamp(25px,5vw,36px);
-  margin: 10px 0;
+.subtitle{
+  color:#bed8e8;
+  margin:0;
 }
 
-.subtitle {
-  color: #bed8e8;
-  margin: 0;
+.card{
+  background:#112e45;
+  border:1px solid #31566e;
+  border-radius:18px;
+  padding:18px;
+  margin-bottom:15px;
 }
 
-.card {
-  background: #112e45;
-  border: 1px solid #31566e;
-  border-radius: 18px;
-  padding: 18px;
-  margin-bottom: 15px;
+.status{
+  font-size:19px;
+  font-weight:800;
 }
 
-.status {
-  font-size: 19px;
-  font-weight: bold;
+.ok{color:#4ee5a2}
+.warning{color:#ffcf70}
+.error{color:#ff8b8b}
+
+.info-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin-top:18px;
 }
 
-.status.ok {
-  color: #4ee5a2;
+.info{
+  background:#0a2236;
+  border-radius:12px;
+  padding:14px;
 }
 
-.status.warning {
-  color: #ffcf70;
+.label{
+  color:#9cbdd1;
+  font-size:12px;
+  margin-bottom:7px;
+  font-weight:700;
 }
 
-.status.error {
-  color: #ff8b8b;
+.value{
+  font-size:16px;
+  font-weight:700;
+  overflow-wrap:anywhere;
 }
 
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(2,minmax(0,1fr));
-  gap: 12px;
-  margin-top: 18px;
+#map{
+  height:480px;
+  border-radius:14px;
+  background:#cddbe3;
+  z-index:1;
 }
 
-.info {
-  background: #0a2236;
-  border-radius: 12px;
-  padding: 14px;
+.section-title{
+  font-size:19px;
+  font-weight:800;
+  margin-bottom:14px;
 }
 
-.info-label {
-  color: #9cbdd1;
-  font-size: 12px;
-  margin-bottom: 7px;
+button{
+  background:#21c2e4;
+  border:none;
+  border-radius:12px;
+  padding:13px 20px;
+  font-size:15px;
+  font-weight:800;
+  color:#062235;
+  cursor:pointer;
 }
 
-.info-value {
-  font-size: 16px;
-  font-weight: 700;
-  overflow-wrap: anywhere;
+button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
 }
 
-#map {
-  height: 470px;
-  border-radius: 14px;
-  background: #cddbe3;
-  z-index: 1;
+.actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:16px;
 }
 
-.map-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 14px;
+.muted{
+  color:#9cbdd1;
+  font-size:13px;
+  line-height:1.5;
 }
 
-button {
-  background: #21c2e4;
-  border: none;
-  border-radius: 12px;
-  padding: 13px 20px;
-  font-size: 15px;
-  font-weight: bold;
-  color: #062235;
-  cursor: pointer;
+.truck-icon{
+  font-size:35px;
+  line-height:42px;
+  filter:drop-shadow(0 3px 3px #222);
 }
 
-button:disabled {
-  opacity: .5;
-  cursor: not-allowed;
+.home-icon{
+  font-size:32px;
+  line-height:40px;
+  filter:drop-shadow(0 3px 3px #222);
 }
 
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 16px;
+.destination{
+  font-size:19px;
+  font-weight:800;
+  margin:8px 0;
+  overflow-wrap:anywhere;
 }
 
-.muted {
-  color: #9cbdd1;
-  font-size: 13px;
+.eta{
+  font-size:30px;
+  color:#55dff0;
+  font-weight:900;
+  margin:8px 0;
 }
 
-.truck-icon {
-  font-size: 34px;
-  line-height: 40px;
-  filter: drop-shadow(0 3px 3px #222);
+.route-info{
+  color:#b9d7e8;
+  font-size:14px;
+  line-height:1.5;
 }
 
-.destination {
-  font-size: 20px;
-  font-weight: bold;
-  margin: 8px 0;
+.divider{
+  border:0;
+  border-top:1px solid #31566e;
+  margin:18px 0;
 }
 
-.eta {
-  font-size: 28px;
-  color: #55dff0;
-  font-weight: 800;
-  margin: 8px 0;
+.footer{
+  text-align:center;
+  color:#7da4bd;
+  font-size:12px;
+  padding:18px;
 }
 
-.footer {
-  text-align: center;
-  color: #7da4bd;
-  font-size: 12px;
-  padding: 18px;
-}
+@media(max-width:600px){
+  .wrap{padding:10px}
+  header{padding:20px}
+  .card{padding:14px}
 
-@media(max-width:600px) {
-
-  .wrap {
-    padding: 10px;
+  #map{
+    height:55vh;
+    min-height:340px;
   }
 
-  header {
-    padding: 20px;
-  }
-
-  .card {
-    padding: 14px;
-  }
-
-  #map {
-    height: 55vh;
-    min-height: 340px;
-  }
-
-  .info-grid {
-    gap: 8px;
-  }
-
-  .info {
-    padding: 11px;
-  }
-
-  .info-value {
-    font-size: 14px;
-  }
+  .info-grid{gap:8px}
+  .info{padding:11px}
+  .value{font-size:14px}
 }
 </style>
 </head>
@@ -214,11 +208,10 @@ button:disabled {
 
 <header>
   <div class="brand">GESTIÓN CENTER CLOUD</div>
-
   <h1>🚚 Seguimiento de entrega</h1>
-
   <p class="subtitle">
-    Consultá la ubicación de nuestro vehículo en tiempo real.
+    Consultá dónde está nuestro vehículo
+    y cuánto falta para tu entrega.
   </p>
 </header>
 
@@ -231,31 +224,27 @@ button:disabled {
   <div class="info-grid">
 
     <div class="info">
-      <div class="info-label">🚚 VEHÍCULO</div>
-      <div class="info-value" id="vehicle">
+      <div class="label">🚚 VEHÍCULO</div>
+      <div class="value" id="vehicle">
         En seguimiento
       </div>
     </div>
 
     <div class="info">
-      <div class="info-label">📡 CONEXIÓN</div>
-      <div class="info-value" id="connection">
+      <div class="label">📡 CONEXIÓN</div>
+      <div class="value" id="connection">
         Consultando...
       </div>
     </div>
 
     <div class="info">
-      <div class="info-label">🕒 ÚLTIMA POSICIÓN</div>
-      <div class="info-value" id="updated">
-        —
-      </div>
+      <div class="label">🕒 ÚLTIMA POSICIÓN</div>
+      <div class="value" id="updated">—</div>
     </div>
 
     <div class="info">
-      <div class="info-label">🎯 PRECISIÓN GPS</div>
-      <div class="info-value" id="accuracy">
-        —
-      </div>
+      <div class="label">🎯 PRECISIÓN GPS</div>
+      <div class="value" id="accuracy">—</div>
     </div>
 
   </div>
@@ -265,81 +254,83 @@ button:disabled {
       Actualización automática cada 10 segundos
     </span>
 
-    <button id="refresh">
-      🔄 Actualizar
-    </button>
+    <button id="refresh">🔄 Actualizar</button>
   </div>
 
 </section>
 
 <section class="card">
 
-  <div class="map-title">
-    📍 Ubicación del vehículo
+  <div class="section-title">
+    🗺️ Ubicación y recorrido
   </div>
 
   <div id="map"></div>
 
+  <p class="muted">
+    🚚 Vehículo &nbsp;&nbsp; 🏠 Destino
+    &nbsp;&nbsp; ━ Recorrido estimado
+  </p>
+
 </section>
 
 <section class="card">
 
-  <div class="map-title">
-    🏠 Tu entrega
+  <div class="section-title">
+    📦 Tu entrega
   </div>
 
-  <div class="info-label">
-    DIRECCIÓN DE DESTINO
-  </div>
+  <div class="label">PEDIDO</div>
+  <div class="value" id="order">—</div>
 
+  <br>
+
+  <div class="label">DIRECCIÓN DE DESTINO</div>
   <div class="destination" id="destination">
-    Pendiente de vincular con el pedido
+    Consultando dirección...
   </div>
 
-  <hr style="border:0;border-top:1px solid #31566e;margin:18px 0">
+  <hr class="divider">
 
-  <div class="info-label">
+  <div class="label">
     TIEMPO ESTIMADO DE LLEGADA
   </div>
 
   <div class="eta" id="eta">
-    Próximamente
+    Calculando...
   </div>
 
-  <div class="muted" id="routeInfo">
-    El cálculo de ruta estará disponible cuando
-    se vincule la dirección de entrega.
+  <div class="route-info" id="routeInfo">
+    Preparando recorrido...
   </div>
 
 </section>
 
 <section class="card">
 
-  <div class="map-title">
-    ℹ️ Información del seguimiento
+  <div class="section-title">
+    ℹ️ Información importante
   </div>
 
   <p class="muted">
-    La ubicación se actualiza mientras el vehículo
-    transmite datos GPS y mantiene conexión.
+    El tiempo estimado es orientativo y depende
+    del tránsito, las paradas y las condiciones
+    de circulación.
   </p>
 
   <p class="muted">
-    Si el vehículo pierde señal, se mostrará
+    Si el vehículo pierde conexión, se mostrará
     la última posición recibida.
   </p>
 
   <p class="muted">
-    Este enlace es personal y tiene una
-    vigencia limitada.
+    Este enlace es personal y tiene vigencia limitada.
   </p>
 
 </section>
 
 <div class="footer">
   GCC Tracking · Gestión Center Cloud
-  <br>
-  Tecnología de seguimiento de entregas
 </div>
 
 </main>
@@ -349,12 +340,11 @@ button:disabled {
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-
 "use strict";
 
-// ======================================================
-// CONFIGURACIÓN SUPABASE
-// ======================================================
+// =====================================================
+// CONFIGURACIÓN
+// =====================================================
 
 const SUPABASE_URL =
   "https://fqlvmijuolgacdqlavfk.supabase.co";
@@ -366,23 +356,13 @@ const client = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_KEY,
   {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false
+    auth:{
+      persistSession:false,
+      autoRefreshToken:false,
+      detectSessionInUrl:false
     }
   }
 );
-
-// ======================================================
-// ELEMENTOS
-// ======================================================
-
-const statusEl = document.getElementById("status");
-const updatedEl = document.getElementById("updated");
-const accuracyEl = document.getElementById("accuracy");
-const connectionEl = document.getElementById("connection");
-const refreshButton = document.getElementById("refresh");
 
 const token = new URLSearchParams(
   window.location.search
@@ -392,262 +372,643 @@ const tokenValido =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   .test(token || "");
 
-// ======================================================
+// =====================================================
+// ELEMENTOS
+// =====================================================
+
+const el = id => document.getElementById(id);
+
+const statusEl = el("status");
+const updatedEl = el("updated");
+const accuracyEl = el("accuracy");
+const connectionEl = el("connection");
+const refreshButton = el("refresh");
+
+const destinationEl = el("destination");
+const orderEl = el("order");
+const etaEl = el("eta");
+const routeInfoEl = el("routeInfo");
+
+// =====================================================
 // MAPA
-// ======================================================
+// =====================================================
 
 const map = L.map("map").setView(
-  [-34.6, -58.45],
+  [-34.6,-58.45],
   10
 );
 
 L.tileLayer(
   "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   {
-    maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors"
+    maxZoom:19,
+    attribution:"&copy; OpenStreetMap contributors"
   }
 ).addTo(map);
 
 const truckIcon = L.divIcon({
-  html: '<span class="truck-icon">🚚</span>',
-  className: "",
-  iconSize: [40, 40],
-  iconAnchor: [20, 20]
+  html:'<span class="truck-icon">🚚</span>',
+  className:"",
+  iconSize:[42,42],
+  iconAnchor:[21,21]
+});
+
+const homeIcon = L.divIcon({
+  html:'<span class="home-icon">🏠</span>',
+  className:"",
+  iconSize:[40,40],
+  iconAnchor:[20,38]
 });
 
 let truckMarker = null;
+let homeMarker = null;
+let routeLine = null;
+
 let lastPosition = null;
 let lastPositionTime = null;
+let destinationCoords = null;
+
 let consulting = false;
+let routeConsulting = false;
 let accessEnded = false;
 
-// ======================================================
-// FUNCIONES VISUALES
-// ======================================================
+let lastRoutePosition = null;
+let lastRouteTime = 0;
 
-function setStatus(message, type = "") {
+// =====================================================
+// UTILIDADES
+// =====================================================
+
+function setStatus(message,type=""){
   statusEl.textContent = message;
   statusEl.className = "status " + type;
 }
 
-function formatArgentina(date) {
-  return new Intl.DateTimeFormat("es-AR", {
-    timeZone: "America/Argentina/Buenos_Aires",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false
+function formatArgentina(date){
+  return new Intl.DateTimeFormat("es-AR",{
+    timeZone:"America/Argentina/Buenos_Aires",
+    day:"2-digit",
+    month:"2-digit",
+    year:"numeric",
+    hour:"2-digit",
+    minute:"2-digit",
+    second:"2-digit",
+    hour12:false
   }).format(date);
 }
 
-function clearPosition() {
+function distanceMeters(a,b){
 
-  if (truckMarker) {
-    map.removeLayer(truckMarker);
-    truckMarker = null;
-  }
+  const R = 6371000;
 
-  lastPosition = null;
-  lastPositionTime = null;
+  const lat1 = a[0]*Math.PI/180;
+  const lat2 = b[0]*Math.PI/180;
 
-  updatedEl.textContent = "—";
-  accuracyEl.textContent = "—";
+  const dLat = (b[0]-a[0])*Math.PI/180;
+  const dLon = (b[1]-a[1])*Math.PI/180;
+
+  const h =
+    Math.sin(dLat/2)**2 +
+    Math.cos(lat1)*Math.cos(lat2)*
+    Math.sin(dLon/2)**2;
+
+  return 2*R*Math.asin(
+    Math.min(1,Math.sqrt(h))
+  );
 }
 
-function endAccess() {
+function clearPosition(){
 
-  accessEnded = true;
+  if(truckMarker){
+    map.removeLayer(truckMarker);
+    truckMarker=null;
+  }
+
+  if(routeLine){
+    map.removeLayer(routeLine);
+    routeLine=null;
+  }
+
+  lastPosition=null;
+  lastPositionTime=null;
+  lastRoutePosition=null;
+
+  updatedEl.textContent="—";
+  accuracyEl.textContent="—";
+  etaEl.textContent="No disponible";
+}
+
+function endAccess(){
+
+  accessEnded=true;
 
   clearPosition();
 
-  connectionEl.textContent = "No disponible";
+  if(homeMarker){
+    map.removeLayer(homeMarker);
+    homeMarker=null;
+  }
+
+  destinationCoords=null;
+
+  destinationEl.textContent="Seguimiento no disponible";
+  orderEl.textContent="—";
+  connectionEl.textContent="No disponible";
+
+  routeInfoEl.textContent=
+    "El enlace no está activo o el viaje ha finalizado.";
 
   setStatus(
     "🔒 Seguimiento no disponible o finalizado",
     "warning"
   );
 
-  refreshButton.disabled = true;
+  refreshButton.disabled=true;
 }
 
-// ======================================================
-// ESTADO DE LA POSICIÓN
-// ======================================================
+// =====================================================
+// EDAD DE LA POSICIÓN
+// =====================================================
 
-function updatePositionAge() {
+function updatePositionAge(){
 
-  if (!lastPositionTime || accessEnded) {
+  if(!lastPositionTime || accessEnded){
     return;
   }
 
-  const seconds = Math.max(
+  const seconds=Math.max(
     0,
     Math.round(
-      (Date.now() - lastPositionTime.getTime()) / 1000
+      (Date.now()-lastPositionTime.getTime())/1000
     )
   );
 
-  updatedEl.textContent =
-    formatArgentina(lastPositionTime) +
-    " · hace " + seconds + " s";
+  updatedEl.textContent=
+    formatArgentina(lastPositionTime)+
+    " · hace "+seconds+" s";
 
-  if (seconds > 60) {
+  if(seconds>60){
 
     setStatus(
       "⚠️ Ubicación desactualizada",
       "warning"
     );
 
-    connectionEl.textContent = "Sin posición reciente";
+    connectionEl.textContent=
+      "Sin posición reciente";
 
-  } else {
+    etaEl.textContent=
+      "Sin actualización reciente";
+
+  }else{
 
     setStatus(
       "🟢 Vehículo en reparto",
       "ok"
     );
 
-    connectionEl.textContent = "Posición reciente";
+    connectionEl.textContent=
+      "Posición reciente";
   }
 }
 
-// ======================================================
-// CONSULTAR SUPABASE
-// ======================================================
+// =====================================================
+// GEOCODIFICAR DIRECCIÓN
+// =====================================================
 
-async function refreshPosition() {
+async function geocodeAddress(address){
 
-  if (!tokenValido || consulting || accessEnded) {
+  const url =
+    "https://nominatim.openstreetmap.org/search?" +
+    new URLSearchParams({
+      q:address,
+      format:"json",
+      limit:"1",
+      countrycodes:"ar"
+    }).toString();
+
+  const response=await fetch(url,{
+    headers:{
+      "Accept":"application/json"
+    }
+  });
+
+  if(!response.ok){
+    throw new Error(
+      "No se pudo consultar la dirección"
+    );
+  }
+
+  const data=await response.json();
+
+  if(!Array.isArray(data) || data.length===0){
+    throw new Error(
+      "No se encontró la dirección en el mapa"
+    );
+  }
+
+  const lat=Number(data[0].lat);
+  const lon=Number(data[0].lon);
+
+  if(
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lon)
+  ){
+    throw new Error(
+      "Coordenadas de destino inválidas"
+    );
+  }
+
+  return [lat,lon];
+}
+
+// =====================================================
+// CONSULTAR DESTINO
+// =====================================================
+
+async function loadDestination(){
+
+  if(!tokenValido || accessEnded){
     return;
   }
 
-  consulting = true;
-  refreshButton.disabled = true;
+  try{
 
-  try {
-
-    const { data, error } = await client.rpc(
-      "tracking_consultar_posicion",
-      {
-        p_token: token
-      }
+    const {data,error}=await client.rpc(
+      "tracking_consultar_destino",
+      {p_token:token}
     );
 
-    if (error) {
+    if(error){
       throw error;
     }
 
-    // La función actual devuelve una lista de posiciones.
-    // Si no devuelve ninguna, no mostramos datos anteriores.
-
-    const positions = Array.isArray(data)
+    const rows=Array.isArray(data)
       ? data
-      : (data ? [data] : []);
+      : (data?[data]:[]);
 
-    if (positions.length === 0) {
+    if(rows.length===0){
+
+      destinationEl.textContent=
+        "Destino no disponible";
+
+      routeInfoEl.textContent=
+        "No se encontró una entrega para este enlace.";
+
+      etaEl.textContent="No disponible";
+
+      return;
+    }
+
+    const delivery=rows[0];
+
+    const address=String(
+      delivery.direccion || ""
+    ).trim();
+
+    orderEl.textContent=
+      delivery.pedido || "—";
+
+    if(!address){
+
+      destinationEl.textContent=
+        "Dirección no informada";
+
+      etaEl.textContent="No disponible";
+      return;
+    }
+
+    destinationEl.textContent=address;
+
+    routeInfoEl.textContent=
+      "Buscando domicilio en el mapa...";
+
+    destinationCoords=await geocodeAddress(
+      address
+    );
+
+    if(accessEnded){
+      return;
+    }
+
+    if(homeMarker){
+      map.removeLayer(homeMarker);
+    }
+
+    homeMarker=L.marker(
+      destinationCoords,
+      {icon:homeIcon}
+    ).addTo(map);
+
+    homeMarker.bindPopup(
+      "Destino de entrega"
+    );
+
+    if(lastPosition){
+
+      await calculateRoute();
+
+    }else{
+
+      map.setView(destinationCoords,15);
+
+      routeInfoEl.textContent=
+        "Esperando posición del vehículo...";
+    }
+
+  }catch(error){
+
+    console.error(
+      "GCC Tracking - destino:",
+      error
+    );
+
+    destinationEl.textContent=
+      "No se pudo ubicar el destino";
+
+    routeInfoEl.textContent=
+      "Revisar dirección o conexión del servicio de mapas.";
+
+    etaEl.textContent="No disponible";
+  }
+}
+
+// =====================================================
+// CALCULAR RECORRIDO
+// =====================================================
+
+async function calculateRoute(){
+
+  if(
+    !lastPosition ||
+    !destinationCoords ||
+    routeConsulting ||
+    accessEnded
+  ){
+    return;
+  }
+
+  // Evita consultar el servicio de rutas
+  // constantemente cuando el vehículo
+  // permanece en el mismo lugar.
+
+  if(
+    lastRoutePosition &&
+    distanceMeters(
+      lastRoutePosition,
+      lastPosition
+    )<100 &&
+    Date.now()-lastRouteTime<60000
+  ){
+    return;
+  }
+
+  routeConsulting=true;
+
+  const origin=[...lastPosition];
+
+  try{
+
+    routeInfoEl.textContent=
+      "Calculando recorrido por calles...";
+
+    const coordinates =
+      origin[1]+","+origin[0]+";"+
+      destinationCoords[1]+","+
+      destinationCoords[0];
+
+    const url =
+      "https://router.project-osrm.org/route/v1/driving/"+
+      coordinates+
+      "?overview=full&geometries=geojson";
+
+    const response=await fetch(url);
+
+    if(!response.ok){
+      throw new Error(
+        "Servicio de rutas no disponible"
+      );
+    }
+
+    const data=await response.json();
+
+    if(
+      data.code!=="Ok" ||
+      !Array.isArray(data.routes) ||
+      data.routes.length===0
+    ){
+      throw new Error(
+        "No se encontró una ruta"
+      );
+    }
+
+    if(accessEnded){
+      return;
+    }
+
+    const route=data.routes[0];
+
+    if(routeLine){
+      map.removeLayer(routeLine);
+    }
+
+    routeLine=L.geoJSON(
+      route.geometry,
+      {
+        style:{
+          color:"#12bde4",
+          weight:6,
+          opacity:0.85
+        }
+      }
+    ).addTo(map);
+
+    const minutes=Math.max(
+      1,
+      Math.round(route.duration/60)
+    );
+
+    const kilometers=(
+      route.distance/1000
+    ).toFixed(1);
+
+    etaEl.textContent=
+      "Aprox. "+minutes+" min";
+
+    routeInfoEl.textContent=
+      "Distancia por calles: "+
+      kilometers+
+      " km · Tiempo de conducción estimado, sin tránsito en vivo.";
+
+    lastRoutePosition=origin;
+    lastRouteTime=Date.now();
+
+    const bounds=L.latLngBounds([
+      origin,
+      destinationCoords
+    ]);
+
+    map.fitBounds(
+      bounds.pad(0.25),
+      {maxZoom:16}
+    );
+
+  }catch(error){
+
+    console.error(
+      "GCC Tracking - ruta:",
+      error
+    );
+
+    etaEl.textContent=
+      "No disponible";
+
+    routeInfoEl.textContent=
+      "No fue posible calcular el recorrido en este momento.";
+
+  }finally{
+
+    routeConsulting=false;
+  }
+}
+
+// =====================================================
+// CONSULTAR POSICIÓN GPS
+// =====================================================
+
+async function refreshPosition(){
+
+  if(
+    !tokenValido ||
+    consulting ||
+    accessEnded
+  ){
+    return;
+  }
+
+  consulting=true;
+  refreshButton.disabled=true;
+
+  try{
+
+    const {data,error}=await client.rpc(
+      "tracking_consultar_posicion",
+      {p_token:token}
+    );
+
+    if(error){
+      throw error;
+    }
+
+    const positions=Array.isArray(data)
+      ? data
+      : (data?[data]:[]);
+
+    if(positions.length===0){
 
       endAccess();
       return;
     }
 
-    const p = positions[0];
+    const p=positions[0];
 
-    const lat = Number(p.latitud);
-    const lng = Number(p.longitud);
+    const lat=Number(p.latitud);
+    const lon=Number(p.longitud);
 
-    if (
+    if(
       !Number.isFinite(lat) ||
-      !Number.isFinite(lng) ||
+      !Number.isFinite(lon) ||
       lat < -90 ||
       lat > 90 ||
-      lng < -180 ||
-      lng > 180
-    ) {
-      throw new Error("Coordenadas inválidas");
+      lon < -180 ||
+      lon > 180
+    ){
+      throw new Error(
+        "Coordenadas GPS inválidas"
+      );
     }
 
-    const positionDate = new Date(p.fecha);
+    const date=new Date(p.fecha);
 
-    if (!Number.isFinite(positionDate.getTime())) {
-      throw new Error("Fecha de posición inválida");
+    if(!Number.isFinite(date.getTime())){
+      throw new Error(
+        "Fecha GPS inválida"
+      );
     }
 
-    const position = [lat, lng];
+    const position=[lat,lon];
 
-    const positionChanged =
+    const changed=
       !lastPosition ||
-      lastPosition[0] !== lat ||
-      lastPosition[1] !== lng;
+      distanceMeters(
+        lastPosition,
+        position
+      )>5;
 
-    if (!truckMarker) {
+    if(!truckMarker){
 
-      truckMarker = L.marker(
+      truckMarker=L.marker(
         position,
-        { icon: truckIcon }
+        {icon:truckIcon}
       ).addTo(map);
 
-      map.setView(position, 16);
+      map.setView(position,16);
 
-    } else {
+    }else{
 
       truckMarker.setLatLng(position);
-
-      if (positionChanged) {
-        map.panTo(position);
-      }
     }
 
-    lastPosition = position;
-    lastPositionTime = positionDate;
+    lastPosition=position;
+    lastPositionTime=date;
 
-    const precision =
-      p.precision_metros == null
+    const precision=
+      p.precision_metros==null
         ? null
         : Number(p.precision_metros);
 
-    accuracyEl.textContent =
-      precision == null || !Number.isFinite(precision)
+    accuracyEl.textContent=
+      precision==null ||
+      !Number.isFinite(precision)
         ? "—"
-        : Math.round(precision) + " metros";
+        : Math.round(precision)+" metros";
 
     updatePositionAge();
 
-  } catch (error) {
+    if(destinationCoords && changed){
+      calculateRoute();
+    }
+
+  }catch(error){
 
     console.error(
-      "GCC Tracking - error de consulta:",
+      "GCC Tracking - posición:",
       error
     );
 
-    connectionEl.textContent = "Error de consulta";
+    connectionEl.textContent=
+      "Error de consulta";
 
     setStatus(
       "⚠️ No se pudo actualizar la ubicación",
       "warning"
     );
 
-    // Ante un error temporal conservamos la última
-    // posición, pero no la presentamos como actual.
+  }finally{
 
-  } finally {
+    consulting=false;
 
-    consulting = false;
-
-    if (!accessEnded) {
-      refreshButton.disabled = false;
+    if(!accessEnded){
+      refreshButton.disabled=false;
     }
   }
 }
 
-// ======================================================
+// =====================================================
 // INICIO
-// ======================================================
+// =====================================================
 
-if (!tokenValido) {
+if(!tokenValido){
 
   endAccess();
 
@@ -656,14 +1017,18 @@ if (!tokenValido) {
     "error"
   );
 
-} else {
+}else{
 
   refreshButton.addEventListener(
     "click",
     refreshPosition
   );
 
+  // Consultar posición y destino.
+  // El destino se consulta una sola vez.
+
   refreshPosition();
+  loadDestination();
 
   setInterval(
     refreshPosition,
@@ -677,9 +1042,8 @@ if (!tokenValido) {
 
   document.addEventListener(
     "visibilitychange",
-    function() {
-
-      if (!document.hidden) {
+    function(){
+      if(!document.hidden){
         refreshPosition();
       }
     }
