@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Invitación | GCC Tracking</title>
+
+<style>
+:root {
+    --azul: #102c45;
+    --verde: #16834a;
+    --gris: #64748b;
+    --borde: #dce4ed;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    color: #263547;
+    background: linear-gradient(145deg, #102c45, #245578);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px 14px;
+}
+
+.contenedor {
+    width: 100%;
+    max-width: 480px;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px #0005;
+}
+
+.encabezado {
+    background: var(--azul);
+    color: white;
+    padding: 38px 20px;
+    text-align: center;
+}
+
+.logo {
+    font-size: 32px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.subtitulo {
+    margin-top: 10px;
+    color: #c4d7e7;
+    font-size: 14px;
+}
+
+.contenido {
+    padding: 28px;
+}
+
+h2 {
+    margin: 0 0 15px;
+    font-size: 23px;
+    color: var(--azul);
+}
+
+p {
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+label {
+    display: block;
+    margin: 18px 0 7px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid var(--borde);
+    border-radius: 9px;
+    font-size: 16px;
+    outline: none;
+}
+
+input:focus {
+    border-color: #245578;
+}
+
+.clave {
+    position: relative;
+}
+
+.clave input {
+    padding-right: 80px;
+}
+
+.ver {
+    position: absolute;
+    right: 10px;
+    top: 15px;
+    background: transparent;
+    color: var(--gris);
+    border: 0;
+    cursor: pointer;
+}
+
+.boton {
+    width: 100%;
+    border: 0;
+    border-radius: 10px;
+    padding: 16px;
+    font-weight: bold;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 18px;
+    background: var(--azul);
+    color: white;
+}
+
+.boton.verde {
+    background: var(--verde);
+}
+
+.boton.secundario {
+    background: #eef3f8;
+    color: var(--azul);
+}
+
+.boton:disabled {
+    opacity: .5;
+    cursor: wait;
+}
+
+.mensaje {
+    margin-top: 18px;
+    padding: 15px;
+    border-radius: 9px;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.mensaje.info {
+    background: #eaf2ff;
+    color: #194783;
+}
+
+.mensaje.error {
+    background: #fdeaea;
+    color: #a51e24;
+}
+
+.mensaje.exito {
+    background: #e5f7ec;
+    color: #166534;
+}
+
+.pie {
+    border-top: 1px solid #e8edf2;
+    padding: 22px;
+    text-align: center;
+    color: var(--gris);
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.pie strong {
+    color: var(--azul);
+    font-size: 17px;
+}
+
+.pie a {
+    color: var(--azul);
+    text-decoration: none;
+}
+
+.cuenta {
+    background: #eef3f8;
+    padding: 14px;
+    border-radius: 8px;
+    overflow-wrap: anywhere;
+    font-size: 14px;
+}
+
+.resultado {
+    text-align: center;
+}
+
+.check {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    background: #e5f7ec;
+    color: var(--verde);
+    font-size: 45px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 24px;
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 12px;
+    }
+
+    .contenido {
+        padding: 22px;
+    }
+
+    .encabezado {
+        padding: 28px 15px;
+    }
+
+    .logo {
+        font-size: 27px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<main class="contenedor">
+
+    <header class="encabezado">
+        <div class="logo">GCC TRACKING</div>
+        <div class="subtitulo">
+            Gestión inteligente de repartos
+        </div>
+    </header>
+
+    <section class="contenido">
+
+        <div id="cargando">
+            <h2>Verificando acceso...</h2>
+            <p>Por favor, aguardá un momento.</p>
+        </div>
+
+        <div id="acceso" hidden>
+
+            <h2>¡Bienvenido!</h2>
+
+            <p>
+                Recibiste una invitación para formar parte
+                de un equipo en GCC Tracking.
+            </p>
+
+            <p>
+                Ingresá utilizando el correo electrónico
+                al que recibiste la invitación.
+            </p>
+
+            <form id="formulario">
+
+                <label for="email">
+                    Correo electrónico
+                </label>
+
+                <input
+                    id="email"
+                    type="email"
+                    autocomplete="email"
+                    placeholder="usuario@empresa.com"
+                    maxlength="254"
+                    required
+                >
+
+                <label for="password">
+                    Contraseña
+                </label>
+
+                <div class="clave">
+
+                    <input
+                        id="password"
+                        type="password"
+                        autocomplete="current-password"
+                        placeholder="Tu contraseña"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        id="verClave"
+                        class="ver"
+                    >
+                        Mostrar
+                    </button>
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="boton"
+                    id="ingresar"
+                >
+                    INICIAR SESIÓN
+                </button>
+
+                <button
+                    type="button"
+                    class="boton secundario"
+                    id="registrar"
+                >
+                    CREAR UNA CUENTA
+                </button>
+
+            </form>
+
+        </div>
+
+        <div id="aceptacion" hidden>
+
+            <h2>Aceptar invitación</h2>
+
+            <p>Estás conectado con la cuenta:</p>
+
+            <div class="cuenta" id="cuentaActual"></div>
+
+            <p>
+                Confirmá tu incorporación a GCC Tracking
+                utilizando el siguiente botón.
+            </p>
+
+            <button
+                class="boton verde"
+                id="aceptar"
+            >
+                ACEPTAR INVITACIÓN
+            </button>
+
+            <button
+                class="boton secundario"
+                id="cambiarCuenta"
+            >
+                UTILIZAR OTRA CUENTA
+            </button>
+
+        </div>
+
+        <div id="completado" class="resultado" hidden>
+
+            <div class="check">✓</div>
+
+            <h2>¡Invitación aceptada!</h2>
+
+            <p id="bienvenida"></p>
+
+            <p>
+                Tu usuario fue incorporado correctamente
+                a GCC Tracking.
+            </p>
+
+            <p>
+                Ya podés utilizar los servicios habilitados
+                para tu perfil.
+            </p>
+
+        </div>
+
+        <div id="sinInvitacion" hidden>
+
+            <h2>Invitación no disponible</h2>
+
+            <p>
+                Para incorporarte a GCC Tracking,
+                necesitás abrir el enlace recibido
+                por correo electrónico.
+            </p>
+
+            <p>
+                Si no tenés una invitación vigente,
+                solicitá una nueva al administrador
+                de tu empresa.
+            </p>
+
+        </div>
+
+        <div id="mensaje" class="mensaje" hidden
+             role="status" aria-live="polite"></div>
+
+    </section>
+
+    <footer class="pie">
+
+        <strong>PymeCenter</strong>
+
+        <br>
+
+        Tecnología para la gestión empresarial
+
+        <br>
+
+        Desde 1997
+
+        <br><br>
+
+        <a href="https://www.pymecenter.com.ar"
+           target="_blank"
+           rel="noopener noreferrer">
+            www.pymecenter.com.ar
+        </a>
+
+    </footer>
+
+</main>
+
+<script type="module">
+
+const $ = id => document.getElementById(id);
+
+const SUPABASE_URL =
+    "https://fqlvmijuolgacdqlavfk.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_ydAZAqaaxAVqrg7HKjUFvQ_4RfiyfqW";
+
+const PAGINA =
+    location.origin + location.pathname;
+
+const TOKEN_STORAGE =
+    "gcc_tracking_invitacion_pendiente";
+
+const roles = {
+    administrador: "Administrador",
+    operador: "Operador",
+    supervisor: "Supervisor",
+    chofer: "Chofer / Repartidor"
+};
+
+let token = null;
+let cliente = null;
+let ocupado = false;
+let finalizado = false;
+
+function mostrarPantalla(id) {
+
+    [
+        "cargando",
+        "acceso",
+        "aceptacion",
+        "completado",
+        "sinInvitacion"
+    ].forEach(pantalla => {
+
+        $(pantalla).hidden = pantalla !== id;
+
+    });
+
+}
+
+function mensaje(texto, tipo = "info") {
+
+    $("mensaje").textContent = texto;
+    $("mensaje").className = "mensaje " + tipo;
+    $("mensaje").hidden = false;
+
+}
+
+function limpiarMensaje() {
+
+    $("mensaje").hidden = true;
+    $("mensaje").textContent = "";
+
+}
+
+function bloquear(estado) {
+
+    ocupado = estado;
+
+    document.querySelectorAll("button.boton")
+        .forEach(boton => {
+
+            boton.disabled = estado;
+
+        });
+
+}
+
+function tokenValido(valor) {
+
+    return typeof valor === "string" &&
+        /^[a-f0-9]{96}$/.test(valor);
+
+}
+
+function recuperarToken() {
+
+    const fragmento = new URLSearchParams(
+        location.hash.substring(1)
+    );
+
+    const candidato = fragmento.get("token");
+
+    if (fragmento.has("token")) {
+
+        if (tokenValido(candidato)) {
+
+            token = candidato;
+
+            sessionStorage.setItem(
+                TOKEN_STORAGE,
+                token
+            );
+
+        } else {
+
+            sessionStorage.removeItem(
+                TOKEN_STORAGE
+            );
+
+        }
+
+        history.replaceState(
+            null,
+            "",
+            location.pathname + location.search
+        );
+
+    } else {
+
+        const guardado = sessionStorage.getItem(
+            TOKEN_STORAGE
+        );
+
+        if (tokenValido(guardado)) {
+
+            token = guardado;
+
+        }
+
+    }
+
+}
+
+function traducirError(error) {
+
+    const texto = error?.message || "";
+
+    const traducciones = {
+        "Invalid login credentials":
+            "Correo electrónico o contraseña incorrectos.",
+
+        "Email not confirmed":
+            "Primero debés verificar tu correo electrónico.",
+
+        "User already registered":
+            "Esta cuenta ya existe. Iniciá sesión.",
+
+        "Password should be at least 6 characters":
+            "La contraseña debe tener al menos 8 caracteres.",
+
+        "Failed to fetch":
+            "No se pudo conectar. Verificá tu conexión."
+    };
+
+    return traducciones[texto] ||
+        texto ||
+        "No se pudo completar la operación.";
+
+}
+
+async function comprobarSesion() {
+
+    if (finalizado) return;
+
+    if (!token) {
+
+        mostrarPantalla("sinInvitacion");
+        return;
+
+    }
+
+    const { data, error } =
+        await cliente.auth.getUser();
+
+    if (error || !data.user) {
+
+        mostrarPantalla("acceso");
+        return;
+
+    }
+
+    $("cuentaActual").textContent =
+        data.user.email || "Usuario conectado";
+
+    mostrarPantalla("aceptacion");
+
+}
+
+$("verClave").addEventListener("click", () => {
+
+    const campo = $("password");
+
+    const visible = campo.type === "text";
+
+    campo.type = visible ? "password" : "text";
+
+    $("verClave").textContent =
+        visible ? "Mostrar" : "Ocultar";
+
+});
+
+$("formulario").addEventListener(
+    "submit",
+    async evento => {
+
+        evento.preventDefault();
+
+        if (ocupado) return;
+
+        limpiarMensaje();
+        bloquear(true);
+
+        try {
+
+            const { error } =
+                await cliente.auth.signInWithPassword({
+
+                    email: $("email").value
+                        .trim()
+                        .toLowerCase(),
+
+                    password: $("password").value
+
+                });
+
+            if (error) throw error;
+
+            $("password").value = "";
+
+            await comprobarSesion();
+
+        } catch (error) {
+
+            mensaje(
+                traducirError(error),
+                "error"
+            );
+
+        } finally {
+
+            bloquear(false);
+
+        }
+
+    }
+);
+
+$("registrar").addEventListener(
+    "click",
+    async () => {
+
+        if (ocupado) return;
+
+        limpiarMensaje();
+
+        if (!$("formulario").reportValidity()) {
+
+            return;
+
+        }
+
+        const email = $("email").value
+            .trim()
+            .toLowerCase();
+
+        const password = $("password").value;
+
+        if (password.length < 8) {
+
+            mensaje(
+                "Elegí una contraseña de al menos 8 caracteres.",
+                "error"
+            );
+
+            return;
+
+        }
+
+        bloquear(true);
+
+        try {
+
+            const { data, error } =
+                await cliente.auth.signUp({
+
+                    email,
+                    password,
+
+                    options: {
+
+                        emailRedirectTo: PAGINA
+
+                    }
+
+                });
+
+            if (error) throw error;
+
+            $("password").value = "";
+
+            if (data.session) {
+
+                await comprobarSesion();
+
+            } else {
+
+                mensaje(
+
+                    "Revisá tu correo electrónico para " +
+                    "verificar la cuenta. Después volvé " +
+                    "a abrir el enlace ORIGINAL de la " +
+                    "invitación para iniciar sesión " +
+                    "y completar tu incorporación.",
+
+                    "exito"
+
+                );
+
+            }
+
+        } catch (error) {
+
+            mensaje(
+                traducirError(error),
+                "error"
+            );
+
+        } finally {
+
+            bloquear(false);
+
+        }
+
+    }
+);
+
+$("aceptar").addEventListener(
+    "click",
+    async () => {
+
+        if (ocupado || !token) return;
+
+        limpiarMensaje();
+        bloquear(true);
+
+        try {
+
+            const { data, error } =
+                await cliente.rpc(
+
+                    "tracking_aceptar_invitacion",
+
+                    {
+                        p_token: token
+                    }
+
+                );
+
+            if (error) throw error;
+
+            const usuario = data?.[0];
+
+            if (!usuario?.usuario_id) {
+
+                throw new Error(
+                    "No se pudo confirmar la incorporación."
+                );
+
+            }
+
+            finalizado = true;
+
+            sessionStorage.removeItem(
+                TOKEN_STORAGE
+            );
+
+            token = null;
+
+            const rol = roles[usuario.rol] ||
+                usuario.rol ||
+                "Usuario";
+
+            $("bienvenida").textContent =
+                "¡Bienvenido, " +
+                usuario.nombre +
+                "! Tu perfil es: " +
+                rol +
+                ".";
+
+            mostrarPantalla("completado");
+
+        } catch (error) {
+
+            mensaje(
+                traducirError(error),
+                "error"
+            );
+
+        } finally {
+
+            bloquear(false);
+
+        }
+
+    }
+);
+
+$("cambiarCuenta").addEventListener(
+    "click",
+    async () => {
+
+        if (ocupado) return;
+
+        bloquear(true);
+        limpiarMensaje();
+
+        try {
+
+            const { error } =
+                await cliente.auth.signOut({
+                    scope: "local"
+                });
+
+            if (error) throw error;
+
+            $("email").value = "";
+            $("password").value = "";
+
+            mostrarPantalla("acceso");
+
+        } catch (error) {
+
+            mensaje(
+                traducirError(error),
+                "error"
+            );
+
+        } finally {
+
+            bloquear(false);
+
+        }
+
+    }
+);
+
+async function iniciar() {
+
+    try {
+
+        recuperarToken();
+
+        const { createClient } = await import(
+            "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+        );
+
+        cliente = createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY,
+            {
+
+                auth: {
+
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true,
+
+                    storageKey:
+                        "gcc_tracking_auth_web"
+
+                }
+
+            }
+        );
+
+        await cliente.auth.getSession();
+
+        await comprobarSesion();
+
+        cliente.auth.onAuthStateChange(
+            evento => {
+
+                if (
+                    evento === "SIGNED_IN" ||
+                    evento === "SIGNED_OUT"
+                ) {
+
+                    setTimeout(() => {
+
+                        if (!ocupado && !finalizado) {
+
+                            comprobarSesion().catch(
+                                () => mensaje(
+                                    "No se pudo verificar la sesión.",
+                                    "error"
+                                )
+                            );
+
+                        }
+
+                    }, 0);
+
+                }
+
+            }
+        );
+
+    } catch {
+
+        mostrarPantalla("sinInvitacion");
+
+        mensaje(
+            "No se pudo iniciar GCC Tracking. " +
+            "Verificá tu conexión e intentá nuevamente.",
+            "error"
+        );
+
+    }
+
+}
+
+iniciar();
+
+</script>
+
+</body>
+</html>
