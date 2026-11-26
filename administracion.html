@@ -662,6 +662,7 @@ input, select {
 </div>
 
 <script type="module">
+    import { instalarABM } from "./administracion_abm.js";
 
 const $ = id => document.getElementById(id);
 
@@ -672,6 +673,7 @@ const SUPABASE_KEY =
     "sb_publishable_ydAZAqaaxAVqrg7HKjUFvQ_4RfiyfqW";
 
 let db;
+let abm;
 let paginaActual = "inicio";
 let numeroConsulta = 0;
 
@@ -1478,7 +1480,19 @@ async function navegar(id) {
             return;
 
         }
+if (abm) {
 
+    abm.invalidar();
+
+    if (id !== "inicio") {
+
+        await abm.mostrar(id);
+
+        return;
+
+    }
+
+}
         let html;
 
         if (id === "inicio") {
@@ -1760,7 +1774,13 @@ async function iniciar() {
 
         );
 
-        await verificarAcceso();
+        abm = instalarABM({
+    db,
+    navegar,
+    mensaje
+});
+
+await verificarAcceso();
 
     } catch (error) {
 
