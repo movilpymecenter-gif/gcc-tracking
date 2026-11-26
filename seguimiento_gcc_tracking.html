@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#071827">
 
 <title>GCC Tracking | Seguimiento de entrega</title>
@@ -14,6 +15,7 @@
 
 <style>
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 
 body{
   margin:0;
@@ -221,6 +223,7 @@ button:disabled{
     Preparando seguimiento...
   </div>
 
+  <div id="receipt" class="destination" hidden></div>
   <div class="info-grid">
 
     <div class="info">
@@ -319,8 +322,7 @@ button:disabled{
   </p>
 
   <p class="muted">
-    Si el vehículo pierde conexión, se mostrará
-    la última posición recibida.
+    Si el vehículo pierde conexión, la posición puede quedar desactualizada. Si no se puede verificar el acceso, se ocultará el mapa.
   </p>
 
   <p class="muted">
@@ -430,7 +432,9 @@ let destinationCoords = null;
 
 let consulting = false;
 let routeConsulting = false;
-let accessEnded = false;
+let accessEnded = true;
+let generation=0;
+let polling=false;
 
 let lastRoutePosition = null;
 let lastRouteTime = 0;
@@ -498,32 +502,30 @@ function clearPosition(){
   etaEl.textContent="No disponible";
 }
 
-function endAccess(){
-
+function hideTracking(message,type="warning",detail=""){
+  generation++;
   accessEnded=true;
-
   clearPosition();
-
-  if(homeMarker){
-    map.removeLayer(homeMarker);
-    homeMarker=null;
-  }
-
+  if(homeMarker){map.removeLayer(homeMarker);homeMarker=null;}
   destinationCoords=null;
-
-  destinationEl.textContent="Seguimiento no disponible";
+  map.setView([-34.6,-58.45],10);
   orderEl.textContent="—";
-  connectionEl.textContent="No disponible";
-
-  routeInfoEl.textContent=
-    "El enlace no está activo o el viaje ha finalizado.";
-
-  setStatus(
-    "🔒 Seguimiento no disponible o finalizado",
-    "warning"
-  );
-
-  refreshButton.disabled=true;
+  destinationEl.textContent="—";
+  routeInfoEl.textContent="";
+  document.querySelector(".info-grid").hidden=true;
+  el("map").closest("section").hidden=true;
+  destinationEl.closest("section").hidden=true;
+  el("receipt").hidden=!detail;
+  el("receipt").textContent=detail;
+  setStatus(message,type);
+}
+function showTracking(){
+  accessEnded=false;
+  el("receipt").hidden=true;
+  document.querySelector(".info-grid").hidden=false;
+  el("map").closest("section").hidden=false;
+  destinationEl.closest("section").hidden=false;
+  map.invalidateSize();
 }
 
 // =====================================================
@@ -627,6 +629,7 @@ async function geocodeAddress(address){
 // =====================================================
 
 async function loadDestination(){
+  const gen=generation;
 
   if(!tokenValido || accessEnded){
     return;
@@ -647,6 +650,7 @@ async function loadDestination(){
       ? data
       : (data?[data]:[]);
 
+    if(accessEnded || gen!==generation)return;
     if(rows.length===0){
 
       destinationEl.textContent=
@@ -660,6 +664,7 @@ async function loadDestination(){
       return;
     }
 
+    if(accessEnded || gen!==generation)return;
     const delivery=rows[0];
 
     const address=String(
@@ -683,11 +688,11 @@ async function loadDestination(){
     routeInfoEl.textContent=
       "Buscando domicilio en el mapa...";
 
-    destinationCoords=await geocodeAddress(
-      address
-    );
+    const coords=await geocodeAddress(address);
+    if(accessEnded || gen!==generation)return;
+    destinationCoords=coords;
 
-    if(accessEnded){
+    if(accessEnded || gen!==generation){
       return;
     }
 
@@ -717,7 +722,7 @@ async function loadDestination(){
     }
 
   }catch(error){
-
+    if(accessEnded || gen!==generation)return;
     console.error(
       "GCC Tracking - destino:",
       error
@@ -738,6 +743,7 @@ async function loadDestination(){
 // =====================================================
 
 async function calculateRoute(){
+  const gen=generation;
 
   if(
     !lastPosition ||
@@ -802,7 +808,7 @@ async function calculateRoute(){
       );
     }
 
-    if(accessEnded){
+    if(accessEnded || gen!==generation){
       return;
     }
 
@@ -854,7 +860,7 @@ async function calculateRoute(){
     );
 
   }catch(error){
-
+    if(accessEnded || gen!==generation)return;
     console.error(
       "GCC Tracking - ruta:",
       error
@@ -906,12 +912,13 @@ async function refreshPosition(){
 
     if(positions.length===0){
 
-      endAccess();
+      hideTracking("Esperando posición GPS o actualización del estado");
       return;
     }
 
     const p=positions[0];
 
+    if(p.latitud==null || p.longitud==null)throw Error("GPS no disponible");
     const lat=Number(p.latitud);
     const lon=Number(p.longitud);
 
@@ -993,6 +1000,7 @@ async function refreshPosition(){
       "⚠️ No se pudo actualizar la ubicación",
       "warning"
     );
+    hideTracking("⚠️ No se pudo actualizar la ubicación");
 
   }finally{
 
@@ -1008,49 +1016,50 @@ async function refreshPosition(){
 // INICIO
 // =====================================================
 
-if(!tokenValido){
-
-  endAccess();
-
-  setStatus(
-    "🔒 Enlace de seguimiento inválido",
-    "error"
-  );
-
-}else{
-
-  refreshButton.addEventListener(
-    "click",
-    refreshPosition
-  );
-
-  // Consultar posición y destino.
-  // El destino se consulta una sola vez.
-
-  refreshPosition();
-  loadDestination();
-
-  setInterval(
-    refreshPosition,
-    10000
-  );
-
-  setInterval(
-    updatePositionAge,
-    1000
-  );
-
-  document.addEventListener(
-    "visibilitychange",
-    function(){
-      if(!document.hidden){
-        refreshPosition();
-      }
+async function poll(){
+  if(polling || !tokenValido)return;
+  polling=true;
+  refreshButton.disabled=true;
+  try{
+    const {data,error}=await client.rpc("tracking_consultar_estado_entrega",{p_token:token});
+    if(error)throw error;
+    const e=data?.[0];
+    if(!e){hideTracking("🔒 Enlace vencido o no disponible");return;}
+    const date=e.fecha_entrega ? formatArgentina(new Date(e.fecha_entrega)):"";
+    if(e.estado_entrega==="entregado"){
+      hideTracking("✓ Tu pedido fue entregado correctamente","ok",date);return;
     }
-  );
+    if(e.estado_entrega==="no_entregado"){
+      hideTracking("No se pudo realizar tu entrega","error",date);return;
+    }
+    if(e.estado_reparto==="suspendido"){
+      hideTracking("Reparto temporalmente suspendido");return;
+    }
+    if(e.estado_reparto!=="en_reparto" || e.estado_entrega!=="pendiente"){
+      hideTracking(e.estado_reparto==="finalizado"?"Reparto finalizado":"Reparto aún no iniciado");return;
+    }
+    showTracking();
+    await refreshPosition();
+    if(!accessEnded && !destinationCoords && !destinationLoading){
+      destinationLoading=true;
+      loadDestination().finally(()=>{destinationLoading=false;});
+    }
+  }catch(error){
+    hideTracking("⚠️ No se pudo actualizar el seguimiento. Reintentando...");
+  }finally{polling=false;refreshButton.disabled=false;}
 }
-
+let destinationLoading=false;
+hideTracking("Consultando estado de entrega...");
+if(!tokenValido){
+  hideTracking("🔒 Enlace de seguimiento inválido","error");
+  refreshButton.disabled=true;
+}else{
+  refreshButton.addEventListener("click",poll);
+  poll();
+  setInterval(poll,10000);
+  setInterval(updatePositionAge,1000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll();});
+}
 </script>
-
 </body>
 </html>
