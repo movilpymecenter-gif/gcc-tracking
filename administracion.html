@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>GCC Tracking | Administración General</title>
+
+<style>
+
+:root {
+    --azul: #082744;
+    --celeste: #087ff5;
+    --verde: #16a34a;
+    --naranja: #f59e0b;
+    --rojo: #dc2626;
+    --texto: #102c45;
+    --gris: #64748b;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #e6eef6;
+    color: var(--texto);
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+        linear-gradient(
+            120deg,
+            rgba(231,239,248,.85),
+            rgba(231,239,248,.35)
+        ),
+        url('fondo_sprinter.jpg') center / cover no-repeat;
+    filter: blur(4px);
+    z-index: -1;
+}
+
+button, input, select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 245px minmax(0, 1fr);
+    min-height: 100vh;
+}
+
+.lateral {
+    background: linear-gradient(160deg, #061d35, #103655);
+    color: white;
+    padding: 20px 12px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.marca {
+    text-align: center;
+    padding: 10px 5px 25px;
+    border-bottom: 1px solid #ffffff40;
+}
+
+.marca img {
+    width: 190px;
+    max-width: 100%;
+}
+
+.marca h3 {
+    margin: 20px 0 0;
+    font-size: 19px;
+}
+
+.menu {
+    display: grid;
+    gap: 7px;
+    margin-top: 24px;
+}
+
+.menu button {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: none;
+    background: transparent;
+    color: #eef6ff;
+    text-align: left;
+    padding: 14px;
+    border-radius: 9px;
+    font-size: 15px;
+}
+
+.menu button:hover,
+.menu button.activo {
+    background: #087ff5;
+}
+
+.menu svg {
+    width: 22px;
+    height: 22px;
+}
+
+.salir {
+    margin-top: auto;
+    padding: 14px;
+    border: 0;
+    border-radius: 9px;
+    background: #ffffff18;
+    color: white;
+    text-align: left;
+}
+
+.principal {
+    min-width: 0;
+}
+
+.encabezado {
+    min-height: 86px;
+    background: rgba(255,255,255,.96);
+    box-shadow: 0 3px 20px #12345615;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.encabezado h1 {
+    font-size: 27px;
+    margin: 0;
+}
+
+.encabezado p {
+    margin: 5px 0 0;
+    color: #496782;
+    font-size: 14px;
+}
+
+.usuario {
+    text-align: right;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.fecha {
+    font-size: 13px;
+    color: var(--gris);
+}
+
+.contenido {
+    padding: 24px;
+}
+
+.titulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.titulo h2 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.tarjetas {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(130px, 1fr));
+    gap: 16px;
+}
+
+.tarjeta,
+.panel {
+    background: rgba(255,255,255,.96);
+    border-radius: 15px;
+    border: 1px solid #e4ebf4;
+    box-shadow: 0 8px 25px #12345618;
+}
+
+.tarjeta {
+    padding: 20px;
+    min-height: 145px;
+}
+
+.tarjeta .icono {
+    color: var(--celeste);
+    margin-bottom: 12px;
+}
+
+.tarjeta .icono svg {
+    width: 29px;
+    height: 29px;
+}
+
+.tarjeta h4 {
+    margin: 0;
+    font-size: 14px;
+}
+
+.tarjeta strong {
+    display: block;
+    font-size: clamp(21px, 2vw, 32px);
+    margin-top: 9px;
+    overflow-wrap: anywhere;
+}
+
+.tarjeta small {
+    display: block;
+    margin-top: 9px;
+    color: var(--gris);
+}
+
+.paneles {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 18px;
+    margin-top: 20px;
+}
+
+.panel {
+    padding: 22px;
+    min-width: 0;
+}
+
+.panel h3 {
+    margin: 0 0 20px;
+    font-size: 18px;
+}
+
+.fila-resumen {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 13px 0;
+    border-bottom: 1px solid #e8eef5;
+    font-size: 14px;
+}
+
+.barra {
+    height: 13px;
+    background: #e4edf7;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 15px 0;
+}
+
+.barra span {
+    height: 100%;
+    display: block;
+    background: linear-gradient(90deg, #087ff5, #25b5ef);
+}
+
+.circulo {
+    width: 175px;
+    height: 175px;
+    border-radius: 50%;
+    margin: 20px auto;
+    display: grid;
+    place-items: center;
+}
+
+.circulo-interior {
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.circulo-interior strong {
+    font-size: 32px;
+}
+
+.circulo-interior small {
+    font-size: 13px;
+    color: var(--gris);
+}
+
+.tabla-contenedor {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+th, td {
+    text-align: left;
+    padding: 13px 12px;
+    border-bottom: 1px solid #e6edf5;
+    white-space: normal;
+}
+
+th {
+    background: #edf4fa;
+    color: #385b7a;
+    font-size: 13px;
+}
+
+tbody tr:hover {
+    background: #f3f8fd;
+}
+
+.estado {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: #e1f6e8;
+    color: #167a3d;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.estado.alerta {
+    color: #a65a00;
+    background: #fff0d6;
+}
+
+.estado.rojo {
+    color: #b42323;
+    background: #fde8e8;
+}
+
+.boton {
+    border: 0;
+    border-radius: 8px;
+    padding: 12px 17px;
+    background: var(--celeste);
+    color: white;
+    font-weight: bold;
+}
+
+.boton.secundario {
+    background: #e8f1fa;
+    color: var(--azul);
+}
+
+.boton:disabled {
+    opacity: .5;
+    cursor: wait;
+}
+
+.herramientas {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+input, select {
+    border: 1px solid #ccd9e7;
+    border-radius: 8px;
+    padding: 12px;
+    background: white;
+    color: var(--texto);
+}
+
+.mensaje {
+    padding: 14px;
+    border-radius: 8px;
+    background: #e7f2ff;
+    color: #19558c;
+    margin-bottom: 18px;
+    font-size: 14px;
+}
+
+.mensaje.error {
+    background: #fde8e8;
+    color: #a51e24;
+}
+
+.login {
+    width: calc(100% - 30px);
+    max-width: 435px;
+    margin: 9vh auto;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px #08274433;
+}
+
+.login-cabecera {
+    background: var(--azul);
+    padding: 30px;
+    text-align: center;
+    color: white;
+}
+
+.login-cabecera h2 {
+    margin: 15px 0 10px;
+}
+
+.login-cabecera img {
+    width: 210px;
+    max-width: 100%;
+}
+
+.login-cuerpo {
+    padding: 28px;
+}
+
+.login-cuerpo label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.login-cuerpo input {
+    width: 100%;
+    margin-bottom: 18px;
+}
+
+.login-cuerpo .boton {
+    width: 100%;
+}
+
+.clave {
+    display: flex;
+    gap: 6px;
+}
+
+.clave button {
+    height: 44px;
+    border: 0;
+    border-radius: 8px;
+    background: #eaf1f8;
+    color: var(--azul);
+}
+
+.pie-login {
+    text-align: center;
+    padding: 20px;
+    color: var(--gris);
+    border-top: 1px solid #edf1f6;
+    font-size: 13px;
+}
+
+.vacio {
+    padding: 22px;
+    color: var(--gris);
+    text-align: center;
+}
+
+@media (max-width: 1250px) {
+    .tarjetas {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 850px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .lateral {
+        position: static;
+        height: auto;
+    }
+
+    .marca {
+        padding: 8px;
+    }
+
+    .marca img {
+        width: 140px;
+    }
+
+    .menu {
+        display: flex;
+        overflow-x: auto;
+        margin: 10px 0;
+    }
+
+    .menu button {
+        white-space: nowrap;
+    }
+
+    .salir {
+        margin: 8px 0;
+    }
+
+    .paneles {
+        grid-template-columns: 1fr;
+    }
+
+    .tarjetas {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .contenido {
+        padding: 14px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<section id="pantallaLogin" class="login" hidden>
+
+    <div class="login-cabecera">
+
+        <img src="logo_gcc.png"
+             alt="Gestión Center Cloud"
+             onerror="this.hidden=true">
+
+        <h2>GCC TRACKING</h2>
+
+        <div>Administración General</div>
+
+    </div>
+
+    <div class="login-cuerpo">
+
+        <form id="formLogin">
+
+            <label for="email">Correo electrónico</label>
+
+            <input id="email"
+                   type="email"
+                   autocomplete="username"
+                   required>
+
+            <label for="password">Contraseña</label>
+
+            <div class="clave">
+
+                <input id="password"
+                       type="password"
+                       autocomplete="current-password"
+                       required>
+
+                <button id="verPassword"
+                        type="button">
+                    Mostrar
+                </button>
+
+            </div>
+
+            <button id="btnIngresar"
+                    class="boton"
+                    type="submit">
+                INICIAR SESIÓN
+            </button>
+
+        </form>
+
+        <div id="mensajeLogin"
+             class="mensaje error"
+             style="margin-top:16px"
+             hidden>
+        </div>
+
+    </div>
+
+    <div class="pie-login">
+        <strong>PymeCenter</strong>
+        <br><br>
+        Tecnología para la gestión empresarial
+        <br>
+        Desde 1997
+    </div>
+
+</section>
+
+<div id="layout" class="layout" hidden>
+
+    <aside class="lateral">
+
+        <div class="marca">
+
+            <img src="logo_gcc.png"
+                 alt="Gestión Center Cloud"
+                 onerror="this.hidden=true">
+
+            <h3>GCC TRACKING</h3>
+
+        </div>
+
+        <nav id="menu" class="menu"></nav>
+
+        <button id="cerrarSesion" class="salir">
+            ↪ Cerrar sesión
+        </button>
+
+    </aside>
+
+    <section class="principal">
+
+        <header class="encabezado">
+
+            <div>
+                <h1>GCC TRACKING</h1>
+                <p>Administración General · PymeCenter</p>
+            </div>
+
+            <div class="usuario">
+                <strong id="nombreUsuario"></strong>
+                <br>
+                <span>Superadministrador</span>
+                <br>
+                <span id="fechaActual" class="fecha"></span>
+            </div>
+
+        </header>
+
+        <main class="contenido">
+
+            <div class="titulo">
+
+                <h2 id="tituloPagina">Inicio</h2>
+
+                <button id="actualizar"
+                        class="boton secundario">
+                    ⟳ Actualizar
+                </button>
+
+            </div>
+
+            <div id="mensajeGeneral"
+                 class="mensaje"
+                 role="status"
+                 hidden>
+            </div>
+
+            <div id="contenidoPagina"></div>
+
+        </main>
+
+    </section>
+
+</div>
+
+<div id="inicioCarga" class="vacio">
+    Iniciando GCC Tracking...
+</div>
+
+<script type="module">
+
+const $ = id => document.getElementById(id);
+
+const SUPABASE_URL =
+    "https://fqlvmijuolgacdqlavfk.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_ydAZAqaaxAVqrg7HKjUFvQ_4RfiyfqW";
+
+let db;
+let paginaActual = "inicio";
+let numeroConsulta = 0;
+
+const iconos = {
+
+    inicio: '<path d="M3 10l9-8 9 8v11h-6v-7H9v7H3z"/>',
+
+    empresas: '<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 7h1m4 0h1M9 11h1m4 0h1M9 15h1m4 0h1"/>',
+
+    planes: '<path d="M2 7l10-5 10 5-10 5zM2 12l10 5 10-5M2 17l10 5 10-5"/>',
+
+    suscripciones: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 2v6m10-6v6M3 10h18"/>',
+
+    vehiculos: '<path d="M2 5h13v13H2zM15 10h4l3 5v3h-7"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/>',
+
+    usuarios: '<circle cx="9" cy="7" r="4"/><path d="M2 21v-4a7 7 0 0114 0v4M17 3a4 4 0 010 8M19 14a5 5 0 013 5v2"/>',
+
+    invitaciones: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 5l10 8 10-8"/>',
+
+    auditoria: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+
+    dinero: '<circle cx="12" cy="12" r="10"/><path d="M12 5v14m4-10c0-4-8-4-8 0s8 2 8 6-8 4-8 0"/>'
+
+};
+
+function icono(nombre) {
+
+    return '<svg xmlns="http://www.w3.org/2000/svg" ' +
+        'width="22" height="22" viewBox="0 0 24 24" ' +
+        'fill="none" stroke="currentColor" ' +
+        'stroke-width="1.8" stroke-linecap="round" ' +
+        'stroke-linejoin="round">' +
+        (iconos[nombre] || iconos.inicio) +
+        '</svg>';
+
+}
+
+function escapar(valor) {
+
+    return String(valor ?? "")
+        .replace(/[&<>"']/g, c => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[c]);
+
+}
+
+function fecha(valor) {
+
+    if (!valor) return "—";
+
+    const texto = String(valor);
+
+    const d = new Date(
+        /^\d{4}-\d{2}-\d{2}$/.test(texto)
+            ? texto + "T12:00:00"
+            : texto
+    );
+
+    return Number.isNaN(d.getTime())
+        ? "—"
+        : d.toLocaleDateString("es-AR");
+
+}
+
+function dinero(valor, moneda = "ARS") {
+
+    if (valor === null || valor === undefined) {
+        return "—";
+    }
+
+    return new Intl.NumberFormat("es-AR", {
+        style: "currency",
+        currency: moneda,
+        maximumFractionDigits: 0
+    }).format(Number(valor));
+
+}
+
+function estado(valor) {
+
+    let clase = "";
+
+    if (
+        ["suspendido","cancelado","inactivo","vencido",
+         "cancelada","vencida","false"]
+            .includes(String(valor))
+    ) {
+        clase = "rojo";
+    }
+
+    if (
+        ["pendiente","mantenimiento"]
+            .includes(String(valor))
+    ) {
+        clase = "alerta";
+    }
+
+    return '<span class="estado ' + clase + '">' +
+        escapar(
+            valor === true ? "Activo" :
+            valor === false ? "Inactivo" :
+            valor
+        ) +
+        '</span>';
+
+}
+
+function mensaje(texto, error = false) {
+
+    $("mensajeGeneral").textContent = texto;
+    $("mensajeGeneral").className =
+        "mensaje" + (error ? " error" : "");
+
+    $("mensajeGeneral").hidden = !texto;
+
+}
+
+async function consultar(tabla, columnas = "*") {
+
+    const {data, error} = await db
+        .from(tabla)
+        .select(columnas)
+        .limit(300);
+
+    if (error) throw error;
+
+    return data || [];
+
+}
+
+async function rpc(nombre, parametros = {}) {
+
+    const {data, error} = await db.rpc(
+        nombre,
+        parametros
+    );
+
+    if (error) throw error;
+
+    return data;
+
+}
+
+function tarjeta(nombre, valor, detalle, ico, color) {
+
+    return '<article class="tarjeta">' +
+        '<div class="icono" style="color:' + color + '">' +
+        icono(ico) +
+        '</div>' +
+        '<h4>' + escapar(nombre) + '</h4>' +
+        '<strong>' + escapar(valor ?? "—") + '</strong>' +
+        '<small>' + escapar(detalle) + '</small>' +
+        '</article>';
+
+}
+
+function fila(nombre, valor) {
+
+    return '<div class="fila-resumen">' +
+        '<span>' + escapar(nombre) + '</span>' +
+        '<strong>' + escapar(valor ?? "—") + '</strong>' +
+        '</div>';
+
+}
+
+function tablaHTML(encabezados, filas) {
+
+    if (!filas.length) {
+
+        return '<div class="vacio">' +
+            'No hay registros para mostrar.' +
+            '</div>';
+
+    }
+
+    return '<div class="tabla-contenedor"><table>' +
+        '<thead><tr>' +
+        encabezados.map(
+            e => '<th>' + escapar(e) + '</th>'
+        ).join("") +
+        '</tr></thead><tbody>' +
+        filas.map(f =>
+            '<tr>' +
+            f.map(c => '<td>' + c + '</td>').join("") +
+            '</tr>'
+        ).join("") +
+        '</tbody></table></div>';
+
+}
+
+async function dashboard() {
+
+    const d = await rpc(
+        "tracking_dashboard_superadmin"
+    );
+
+    const habilitados =
+        Number(d.vehiculos_habilitados || 0);
+
+    const autorizados =
+        Number(d.vehiculos_autorizados || 0);
+
+    const porcentaje = autorizados > 0
+        ? Math.min(100, habilitados / autorizados * 100)
+        : 0;
+
+    const [suscripciones, empresas, auditoria] =
+        await Promise.all([
+
+            consultar("tracking_suscripciones"),
+
+            consultar("tracking_empresas", "id,razon_social"),
+
+            db.from("tracking_auditoria")
+                .select("accion,entidad,fecha")
+                .order("fecha", {ascending:false})
+                .limit(6)
+
+        ]);
+
+    if (auditoria.error) throw auditoria.error;
+
+    const nombres = Object.fromEntries(
+        empresas.map(e => [e.id, e.razon_social])
+    );
+
+    const limite = new Date();
+    limite.setDate(limite.getDate() + 15);
+
+    const vencimientos = suscripciones
+        .filter(s =>
+            s.estado === "activo" &&
+            s.fecha_vencimiento &&
+            new Date(s.fecha_vencimiento + "T23:59:59") <= limite
+        )
+        .sort((a,b) =>
+            a.fecha_vencimiento.localeCompare(b.fecha_vencimiento)
+        )
+        .slice(0, 6);
+
+    return `
+
+        <div class="tarjetas">
+
+            ${tarjeta(
+                "Empresas",
+                d.empresas_totales,
+                "Empresas registradas",
+                "empresas",
+                "#087ff5"
+            )}
+
+            ${tarjeta(
+                "Vehículos",
+                habilitados,
+                "Habilitados",
+                "vehiculos",
+                "#16a34a"
+            )}
+
+            ${tarjeta(
+                "Usuarios",
+                d.usuarios_administrativos,
+                "Usuarios administrativos",
+                "usuarios",
+                "#087ff5"
+            )}
+
+            ${tarjeta(
+                "Suscripciones",
+                d.empresas_autorizadas,
+                "Empresas autorizadas",
+                "suscripciones",
+                "#f59e0b"
+            )}
+
+            ${tarjeta(
+                "Abonos mensuales",
+                dinero(d.abonos_mensuales_ars),
+                "Importe mensual proyectado",
+                "dinero",
+                "#16a34a"
+            )}
+
+        </div>
+
+        <div class="paneles">
+
+            <section class="panel">
+
+                <h3>Resumen comercial</h3>
+
+                ${fila("Empresas activas", d.empresas_activas)}
+
+                ${fila("Empresas suspendidas", d.empresas_suspendidas)}
+
+                ${fila("Vehículos autorizados", autorizados)}
+
+                ${fila("Choferes activos", d.choferes_activos)}
+
+                ${fila("Suscripciones por vencer", d.suscripciones_por_vencer)}
+
+            </section>
+
+            <section class="panel">
+
+                <h3>Ocupación de vehículos autorizados</h3>
+
+                <div class="circulo"
+                     style="background:conic-gradient(
+                         #16a34a 0% ${porcentaje}%,
+                         #e5edf5 ${porcentaje}% 100%
+                     )">
+
+                    <div class="circulo-interior">
+
+                        <strong>${habilitados}</strong>
+
+                        <small>Vehículos habilitados</small>
+
+                    </div>
+
+                </div>
+
+                ${fila("Cupo autorizado", autorizados)}
+
+                <div class="barra">
+
+                    <span style="width:${porcentaje}%"></span>
+
+                </div>
+
+            </section>
+
+            <section class="panel">
+
+                <h3>Próximos vencimientos</h3>
+
+                ${tablaHTML(
+                    ["Empresa","Vencimiento"],
+                    vencimientos.map(s => [
+                        escapar(nombres[s.empresa_id] || "Empresa"),
+                        escapar(fecha(s.fecha_vencimiento))
+                    ])
+                )}
+
+            </section>
+
+            <section class="panel">
+
+                <h3>Actividad reciente</h3>
+
+                ${tablaHTML(
+                    ["Acción","Entidad","Fecha"],
+                    (auditoria.data || []).map(a => [
+                        escapar(a.accion),
+                        escapar(a.entidad),
+                        escapar(fecha(a.fecha))
+                    ])
+                )}
+
+            </section>
+
+        </div>
+
+    `;
+
+}
+
+const secciones = [
+
+    ["inicio", "Inicio"],
+
+    ["empresas", "Empresas"],
+
+    ["planes", "Planes comerciales"],
+
+    ["suscripciones", "Suscripciones"],
+
+    ["vehiculos", "Vehículos"],
+
+    ["usuarios", "Usuarios"],
+
+    ["invitaciones", "Invitaciones"],
+
+    ["auditoria", "Auditoría"]
+
+];
+
+async function contenidoSeccion(id) {
+
+    let registros = [];
+    let columnas = [];
+    let filas = [];
+
+    const empresas = [
+        "suscripciones",
+        "vehiculos",
+        "usuarios",
+        "auditoria"
+    ].includes(id)
+
+        ? await consultar(
+            "tracking_empresas",
+            "id,razon_social"
+        )
+
+        : [];
+
+    const nombres = Object.fromEntries(
+        empresas.map(e => [e.id, e.razon_social])
+    );
+
+    const nombreEmpresa = id =>
+        escapar(nombres[id] || "—");
+
+    switch (id) {
+
+        case "empresas":
+
+            registros = await consultar("tracking_empresas");
+
+            columnas = [
+                "Razón social",
+                "Nombre comercial",
+                "CUIT",
+                "Correo",
+                "Estado"
+            ];
+
+            filas = registros.map(r => [
+
+                escapar(r.razon_social),
+
+                escapar(r.nombre_comercial),
+
+                escapar(r.cuit),
+
+                escapar(r.email),
+
+                estado(r.estado)
+
+            ]);
+
+            break;
+
+        case "planes":
+
+            registros = await consultar("tracking_planes");
+
+            columnas = [
+                "Plan",
+                "Vehículos",
+                "Usuarios administrativos",
+                "Abono mensual",
+                "Estado"
+            ];
+
+            filas = registros.map(r => [
+
+                escapar(r.nombre),
+
+                escapar(r.max_vehiculos),
+
+                escapar(r.max_usuarios_administrativos),
+
+                escapar(dinero(r.precio_mensual, r.moneda)),
+
+                estado(r.activo)
+
+            ]);
+
+            break;
+
+        case "suscripciones":
+
+            registros = await consultar(
+                "tracking_suscripciones"
+            );
+
+            const planes = await consultar(
+                "tracking_planes",
+                "id,nombre"
+            );
+
+            const nombresPlanes = Object.fromEntries(
+                planes.map(p => [p.id, p.nombre])
+            );
+
+            columnas = [
+                "Empresa",
+                "Plan",
+                "Vehículos",
+                "Usuarios",
+                "Abono",
+                "Vencimiento",
+                "Estado"
+            ];
+
+            filas = registros.map(r => [
+
+                nombreEmpresa(r.empresa_id),
+
+                escapar(nombresPlanes[r.plan_id] || "—"),
+
+                escapar(r.max_vehiculos),
+
+                escapar(r.max_usuarios_administrativos),
+
+                escapar(dinero(r.importe_mensual, r.moneda)),
+
+                escapar(fecha(r.fecha_vencimiento)),
+
+                estado(r.estado)
+
+            ]);
+
+            break;
+
+        case "vehiculos":
+
+            registros = await consultar("tracking_vehiculos");
+
+            columnas = [
+                "Empresa",
+                "Patente",
+                "Vehículo",
+                "Marca",
+                "Modelo",
+                "Estado"
+            ];
+
+            filas = registros.map(r => [
+
+                nombreEmpresa(r.empresa_id),
+
+                escapar(r.patente),
+
+                escapar(r.nombre),
+
+                escapar(r.marca),
+
+                escapar(r.modelo),
+
+                estado(r.estado)
+
+            ]);
+
+            break;
+
+        case "usuarios":
+
+            registros = await consultar("tracking_usuarios");
+
+            columnas = [
+                "Empresa",
+                "Nombre",
+                "Perfil",
+                "Teléfono",
+                "Estado"
+            ];
+
+            filas = registros.map(r => [
+
+                nombreEmpresa(r.empresa_id),
+
+                escapar(r.nombre),
+
+                escapar(r.rol),
+
+                escapar(r.telefono),
+
+                estado(r.activo)
+
+            ]);
+
+            break;
+
+        case "auditoria":
+
+            const respuesta = await db
+                .from("tracking_auditoria")
+                .select("fecha,accion,entidad,empresa_id")
+                .order("fecha", {ascending:false})
+                .limit(300);
+
+            if (respuesta.error) throw respuesta.error;
+
+            registros = respuesta.data || [];
+
+            columnas = [
+                "Fecha y hora",
+                "Empresa",
+                "Operación",
+                "Entidad"
+            ];
+
+            filas = registros.map(r => [
+
+                escapar(
+                    new Date(r.fecha).toLocaleString("es-AR")
+                ),
+
+                nombreEmpresa(r.empresa_id),
+
+                escapar(r.accion),
+
+                escapar(r.entidad)
+
+            ]);
+
+            break;
+
+    }
+
+    return `
+
+        <section class="panel">
+
+            <div class="herramientas">
+
+                <input id="buscar"
+                       type="search"
+                       placeholder="Buscar registros...">
+
+            </div>
+
+            ${tablaHTML(columnas, filas)}
+
+            <div class="vacio">
+
+                ${registros.length} registros mostrados
+
+                ${registros.length === 300
+                    ? " · Límite inicial de consulta"
+                    : ""}
+
+            </div>
+
+        </section>
+
+    `;
+
+}
+
+async function pantallaInvitaciones() {
+
+    const empresas = await consultar(
+        "tracking_empresas",
+        "id,razon_social"
+    );
+
+    return `
+
+        <section class="panel">
+
+            <h3>Invitaciones por empresa</h3>
+
+            <div class="herramientas">
+
+                <select id="empresaInvitacion">
+
+                    <option value="">
+                        Seleccionar empresa
+                    </option>
+
+                    ${empresas.map(e => `
+
+                        <option value="${escapar(e.id)}">
+
+                            ${escapar(e.razon_social)}
+
+                        </option>
+
+                    `).join("")}
+
+                </select>
+
+                <button id="consultarInvitaciones"
+                        class="boton">
+                    CONSULTAR
+                </button>
+
+            </div>
+
+            <div id="listaInvitaciones" class="vacio">
+                Seleccioná una empresa.
+            </div>
+
+        </section>
+
+    `;
+
+}
+
+async function consultarInvitaciones() {
+
+    const empresa = $("empresaInvitacion").value;
+
+    if (!empresa) {
+
+        mensaje("Seleccioná una empresa.", true);
+
+        return;
+
+    }
+
+    $("consultarInvitaciones").disabled = true;
+
+    try {
+
+        mensaje("");
+
+        const lista = await rpc(
+            "tracking_listar_invitaciones",
+            {p_empresa_id: empresa}
+        );
+
+        $("listaInvitaciones").className = "";
+
+        $("listaInvitaciones").innerHTML = tablaHTML(
+
+            [
+                "Nombre",
+                "Correo",
+                "Perfil",
+                "Estado",
+                "Vencimiento"
+            ],
+
+            (lista || []).map(r => [
+
+                escapar(r.nombre),
+
+                escapar(r.email),
+
+                escapar(r.rol),
+
+                estado(r.estado),
+
+                escapar(fecha(r.vence))
+
+            ])
+
+        );
+
+    } catch (error) {
+
+        mensaje(error.message, true);
+
+    } finally {
+
+        if ($("consultarInvitaciones")) {
+
+            $("consultarInvitaciones").disabled = false;
+
+        }
+
+    }
+
+}
+
+async function navegar(id) {
+
+    paginaActual = id;
+
+    const consulta = ++numeroConsulta;
+
+    $("tituloPagina").textContent =
+        secciones.find(s => s[0] === id)?.[1] || "Inicio";
+
+    document
+        .querySelectorAll("#menu button")
+        .forEach(b => {
+
+            b.classList.toggle(
+                "activo",
+                b.dataset.seccion === id
+            );
+
+        });
+
+    mensaje("");
+
+    $("contenidoPagina").innerHTML =
+        '<div class="vacio">Cargando información...</div>';
+
+    try {
+
+        const admin = await rpc(
+            "tracking_es_superadministrador"
+        );
+
+        if (admin !== true) {
+
+            await db.auth.signOut({scope:"local"});
+
+            mostrarLogin("Acceso no autorizado.");
+
+            return;
+
+        }
+
+        let html;
+
+        if (id === "inicio") {
+
+            html = await dashboard();
+
+        } else if (id === "invitaciones") {
+
+            html = await pantallaInvitaciones();
+
+        } else {
+
+            html = await contenidoSeccion(id);
+
+        }
+
+        if (consulta !== numeroConsulta) return;
+
+        $("contenidoPagina").innerHTML = html;
+
+        if ($("consultarInvitaciones")) {
+
+            $("consultarInvitaciones").onclick =
+                consultarInvitaciones;
+
+        }
+
+        if ($("buscar")) {
+
+            $("buscar").oninput = evento => {
+
+                const texto = evento.target.value
+                    .toLowerCase()
+                    .trim();
+
+                document
+                    .querySelectorAll(
+                        "#contenidoPagina tbody tr"
+                    )
+                    .forEach(tr => {
+
+                        tr.hidden =
+                            !tr.textContent
+                                .toLowerCase()
+                                .includes(texto);
+
+                    });
+
+            };
+
+        }
+
+    } catch (error) {
+
+        if (consulta !== numeroConsulta) return;
+
+        $("contenidoPagina").innerHTML = "";
+
+        mensaje(
+
+            "No se pudo cargar la información: " +
+            error.message,
+
+            true
+
+        );
+
+    }
+
+}
+
+function mostrarLogin(texto = "") {
+
+    numeroConsulta++;
+
+    $("layout").hidden = true;
+
+    $("contenidoPagina").innerHTML = "";
+
+    $("pantallaLogin").hidden = false;
+
+    $("inicioCarga").hidden = true;
+
+    $("mensajeLogin").textContent = texto;
+
+    $("mensajeLogin").hidden = !texto;
+
+}
+
+async function verificarAcceso() {
+
+    const {data, error} = await db.auth.getUser();
+
+    if (error || !data.user) {
+
+        mostrarLogin();
+
+        return;
+
+    }
+
+    const autorizado = await rpc(
+        "tracking_es_superadministrador"
+    );
+
+    if (autorizado !== true) {
+
+        await db.auth.signOut({scope:"local"});
+
+        mostrarLogin(
+            "Tu cuenta no posee permisos de superadministrador."
+        );
+
+        return;
+
+    }
+
+    const {data:administrador} = await db
+        .from("tracking_superadministradores")
+        .select("nombre")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+
+    $("nombreUsuario").textContent =
+        administrador?.nombre || "Administración PymeCenter";
+
+    $("fechaActual").textContent =
+        new Date().toLocaleDateString("es-AR", {
+
+            weekday: "long",
+
+            day: "numeric",
+
+            month: "long",
+
+            year: "numeric"
+
+        });
+
+    $("pantallaLogin").hidden = true;
+
+    $("inicioCarga").hidden = true;
+
+    $("layout").hidden = false;
+
+    await navegar("inicio");
+
+}
+
+$("menu").innerHTML = secciones.map(([id, nombre]) =>
+
+    '<button data-seccion="' + id + '">' +
+
+        icono(id) +
+
+        escapar(nombre) +
+
+    '</button>'
+
+).join("");
+
+document
+    .querySelectorAll("#menu button")
+    .forEach(b => {
+
+        b.onclick = () => navegar(b.dataset.seccion);
+
+    });
+
+$("actualizar").onclick = () => navegar(paginaActual);
+
+$("verPassword").onclick = () => {
+
+    const p = $("password");
+
+    p.type = p.type === "password"
+        ? "text"
+        : "password";
+
+    $("verPassword").textContent =
+        p.type === "password"
+            ? "Mostrar"
+            : "Ocultar";
+
+};
+
+$("formLogin").onsubmit = async evento => {
+
+    evento.preventDefault();
+
+    $("btnIngresar").disabled = true;
+
+    $("btnIngresar").textContent = "VERIFICANDO...";
+
+    $("mensajeLogin").hidden = true;
+
+    try {
+
+        const {error} = await db.auth.signInWithPassword({
+
+            email: $("email").value.trim(),
+
+            password: $("password").value
+
+        });
+
+        $("password").value = "";
+
+        if (error) throw error;
+
+        await verificarAcceso();
+
+    } catch (error) {
+
+        mostrarLogin(
+            "No se pudo iniciar sesión. " +
+            "Verificá las credenciales y la conexión."
+        );
+
+    } finally {
+
+        $("btnIngresar").disabled = false;
+
+        $("btnIngresar").textContent = "INICIAR SESIÓN";
+
+    }
+
+};
+
+$("cerrarSesion").onclick = async () => {
+
+    const {error} = await db.auth.signOut({
+        scope: "local"
+    });
+
+    if (error) {
+
+        mensaje("No se pudo cerrar la sesión.", true);
+
+        return;
+
+    }
+
+    mostrarLogin();
+
+};
+
+async function iniciar() {
+
+    try {
+
+        const {createClient} = await import(
+
+            "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+
+        );
+
+        db = createClient(
+
+            SUPABASE_URL,
+
+            SUPABASE_KEY,
+
+            {
+
+                auth: {
+
+                    storageKey: "gcc_tracking_superadmin_web",
+
+                    persistSession: true,
+
+                    autoRefreshToken: true,
+
+                    detectSessionInUrl: false
+
+                }
+
+            }
+
+        );
+
+        await verificarAcceso();
+
+    } catch (error) {
+
+        mostrarLogin(
+            "No se pudo conectar con GCC Tracking. " +
+            "Verificá tu conexión e intentá nuevamente."
+        );
+
+    }
+
+}
+
+iniciar();
+
+</script>
+
+</body>
+</html>
