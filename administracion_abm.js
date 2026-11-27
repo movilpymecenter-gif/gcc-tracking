@@ -558,7 +558,8 @@ export function instalarABM({db, navegar, mensaje}) {
                 await navegar(seccion);
 
                 mensaje(
-                    typeof respuesta === "string"
+                    typeof respuesta === "string" &&
+                    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(respuesta)
                         ? respuesta
                         : "Operación realizada correctamente."
                 );
@@ -1635,67 +1636,269 @@ export function instalarABM({db, navegar, mensaje}) {
     // AUDITORÍA
     // =========================================
 
+
+    const etiquetasAuditoria = {
+        razon_social: "Razón social",
+        nombre_comercial: "Nombre comercial",
+        nombre: "Nombre",
+        cuit: "CUIT",
+        email: "Correo electrónico",
+        telefono: "Teléfono",
+        domicilio: "Domicilio",
+        localidad: "Localidad",
+        provincia: "Provincia",
+        pais: "País",
+        estado: "Estado",
+        activo: "Habilitado",
+        empresa_id: "Empresa",
+        plan_id: "Plan comercial",
+        max_vehiculos: "Vehículos autorizados",
+        max_usuarios_administrativos: "Usuarios autorizados",
+        importe_mensual: "Abono contratado",
+        precio_mensual: "Precio mensual del plan",
+        moneda: "Moneda",
+        fecha_inicio: "Fecha de inicio",
+        fecha_vencimiento: "Vencimiento",
+        descripcion: "Descripción",
+        observaciones: "Observaciones",
+        patente: "Patente",
+        marca: "Marca",
+        modelo: "Modelo",
+        anio: "Año",
+        tipo: "Tipo",
+        capacidad_kg: "Capacidad en kg",
+        capacidad_bultos: "Capacidad en bultos",
+        rol: "Perfil de usuario"
+    };
+
+    function entidadAuditoria(valor) {
+
+        return ({
+            empresas: "Empresa",
+            planes: "Plan comercial",
+            suscripciones: "Suscripción",
+            vehiculos: "Vehículo",
+            usuarios: "Usuario",
+            invitaciones: "Invitación",
+            superadministradores: "Superadministrador"
+        })[String(valor || "").replace(/^tracking_/, "")]
+            || String(valor || "Sin identificar");
+    }
+
+    function accionAuditoria(valor) {
+
+        const a = String(valor || "").toLowerCase();
+
+        return ({
+            insert: "Alta de registro",
+            update: "Modificación",
+            delete: "Eliminación",
+            crear: "Alta de registro",
+            modificar: "Modificación",
+            renovar: "Renovación",
+            suspender: "Suspensión",
+            activar: "Activación",
+            cancelar: "Cancelación"
+        })[a] || a.replaceAll("_", " ");
+    }
+
+    function valorAuditoria(campo, valor, datos) {
+
+        if (valor === null || valor === undefined || valor === "")
+            return "Sin dato";
+
+        if (campo === "empresa_id")
+            return empresaNombre(valor) || "Empresa no disponible";
+
+        if (campo === "plan_id")
+            return planNombre(valor) || "Plan no disponible";
+
+        if (["importe_mensual", "precio_mensual"].includes(campo))
+            return moneda(valor, datos.moneda || "ARS");
+
+        if (["fecha_inicio", "fecha_vencimiento"].includes(campo))
+            return fecha(valor);
+
+        if (typeof valor === "boolean")
+            return valor ? "Sí" : "No";
+
+        if (typeof valor === "object")
+            return JSON.stringify(valor);
+
+        const estados = {
+            activo: "Activo",
+            suspendido: "Suspendido",
+            cancelado: "Cancelado",
+            vencido: "Vencido",
+            pendiente: "Pendiente",
+            administrador: "Administrador",
+            operador: "Operador",
+            supervisor: "Supervisor",
+            chofer: "Chofer",
+            inactivo: "Inactivo",
+            mantenimiento: "Mantenimiento"
+        };
+
+        if (["estado", "rol"].includes(campo))
+            return estados[valor] || String(valor);
+
+        return String(valor);
+    }
+
     function detalleAuditoria(r) {
 
+        const antes = r.datos_anteriores || {};
+        const despues = r.datos_nuevos || {};
+
+        const motivo =
+            despues.motivo ||
+            despues.motivo_cancelacion ||
+            antes.motivo ||
+            "";
+
+        const campos = [...new Set([
+            ...Object.keys(antes),
+            ...Object.keys(despues)
+        ])];
+
+        const tecnicos = new Set([
+            "id", "user_id", "creado", "creado_por",
+            "actualizado", "motivo", "motivo_cancelacion",
+            "token", "token_hash", "aceptado_por",
+            "cancelado_por"
+        ]);
+
+        const cambios = campos.filter(c =>
+            !tecnicos.has(c) &&
+            JSON.stringify(antes[c]) !== JSON.stringify(despues[c])
+        );
+
+        const filas = cambios.map(c => `
+            <tr>
+                <td><strong>${esc(
+                    etiquetasAuditoria[c] || c.replaceAll("_", " ")
+                )}</strong></td>
+                <td class="audit-anterior">${esc(
+                    valorAuditoria(c, antes[c], antes)
+                )}</td>
+                <td class="audit-nuevo">${esc(
+                    valorAuditoria(c, despues[c], despues)
+                )}</td>
+            </tr>
+        `).join("");
+
+        const fechaHora = new Date(r.fecha).toLocaleString("es-AR", {
+            timeZone: "America/Argentina/Buenos_Aires"
+        });
+
+        const html = `
+            <div class="abm-ancho">
+
+                <div class="audit-resumen">
+
+                    <strong>${esc(accionAuditoria(r.accion))}</strong>
+                    <p>Entidad: ${esc(entidadAuditoria(r.entidad))}</p>
+                    <p>Empresa: ${esc(empresaNombre(r.empresa_id))}</p>
+                    <p>Fecha y hora: ${esc(fechaHora)}</p>
+                    <p>Responsable:
+                        <span id="auditResponsable">Consultando...</span>
+                    </p>
+
+                </div>
+
+                <div class="audit-motivo">
+                    <strong>Motivo de la operación</strong>
+                    <p>${esc(motivo || "No se registró un motivo.")}</p>
+                </div>
+
+                <h4>Detalle de los cambios</h4>
+
+                ${cambios.length ? `
+                    <div class="tabla-contenedor">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Concepto</th>
+                                    <th>Anterior</th>
+                                    <th>Nuevo</th>
+                                </tr>
+                            </thead>
+                            <tbody>${filas}</tbody>
+                        </table>
+                    </div>
+                ` : "<p>No se registraron cambios comerciales en este evento.</p>"}
+
+                <details class="audit-tecnico">
+                    <summary>Ver información técnica</summary>
+
+                    <p>Identificador del responsable:
+                        ${esc(r.user_id || "No registrado")}
+                    </p>
+
+                    <h4>Datos anteriores</h4>
+                    <pre class="abm-detalle">${
+                        esc(JSON.stringify(r.datos_anteriores, null, 2))
+                    }</pre>
+
+                    <h4>Datos nuevos</h4>
+                    <pre class="abm-detalle">${
+                        esc(JSON.stringify(r.datos_nuevos, null, 2))
+                    }</pre>
+                </details>
+
+            </div>
+        `;
+
         formulario(
-
-            "Detalle de auditoría",
-
-            [
-
-                '<div class="abm-ancho">' +
-
-                '<p><strong>Operación: </strong>' +
-                    esc(r.accion) + '</p>' +
-
-                '<p><strong>Entidad: </strong>' +
-                    esc(r.entidad) + '</p>' +
-
-                '<p><strong>Empresa: </strong>' +
-                    esc(empresaNombre(r.empresa_id)) + '</p>' +
-
-                '<p><strong>Fecha: </strong>' +
-
-                    esc(new Date(r.fecha)
-                        .toLocaleString("es-AR")) +
-
-                    '</p>' +
-
-                '<h4>Datos anteriores</h4>' +
-
-                '<pre class="abm-detalle">' +
-
-                    esc(JSON.stringify(
-                        r.datos_anteriores,null,2
-                    )) +
-
-                    '</pre>' +
-
-                '<h4>Datos nuevos</h4>' +
-
-                '<pre class="abm-detalle">' +
-
-                    esc(JSON.stringify(
-                        r.datos_nuevos,null,2
-                    )) +
-
-                    '</pre>' +
-
-                '</div>'
-
-            ],
-
+            "Historial de auditoría",
+            [html],
             async () => {},
-
-            "La auditoría es de solo lectura."
-
+            "Registro histórico de solo lectura."
         );
 
         $("abmGuardar").hidden = true;
         $("abmCancelar").textContent = "Cerrar";
+        $("abmFormulario").onsubmit = e => e.preventDefault();
 
-        $("abmFormulario").onsubmit =
-            e => e.preventDefault();
+        const destino = $("auditResponsable");
+
+        (async () => {
+
+            let nombre = "";
+
+            try {
+
+                if (r.user_id) {
+
+                    const admin = await db
+                        .from("tracking_superadministradores")
+                        .select("nombre")
+                        .eq("user_id", r.user_id)
+                        .maybeSingle();
+
+                    nombre = admin.data?.nombre || "";
+
+                    if (!nombre && r.empresa_id) {
+
+                        const usuario = await db
+                            .from("tracking_usuarios")
+                            .select("nombre")
+                            .eq("user_id", r.user_id)
+                            .eq("empresa_id", r.empresa_id)
+                            .maybeSingle();
+
+                        nombre = usuario.data?.nombre || "";
+                    }
+                }
+
+            } catch {}
+
+            if (destino.isConnected) {
+                destino.textContent = nombre ||
+                    "Responsable no identificado";
+            }
+
+        })();
 
     }
 
@@ -1734,6 +1937,8 @@ export function instalarABM({db, navegar, mensaje}) {
                 "Usuarios",
                 "Abono mensual",
                 "Estado",
+                "Empresas vigentes",
+                "Abonos proyectados",
                 "Acciones"
             ]
 
@@ -2181,6 +2386,12 @@ export function instalarABM({db, navegar, mensaje}) {
 
         if (!r) return;
 
+        if (nombre === "comercial-plan")
+            return detalleComercialPlan(r);
+
+        if (nombre === "historial")
+            return historialRegistro(r);
+
         if (nombre === "editar") {
 
             switch (seccion) {
@@ -2252,6 +2463,515 @@ export function instalarABM({db, navegar, mensaje}) {
     // BUSCADORES Y FILTROS
     // =========================================
 
+
+
+    let comercialSuscripciones = [];
+    let comercialVehiculos = [];
+    let comercialUsuarios = [];
+
+    function hoyComercial() {
+
+        const partes = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "America/Argentina/Buenos_Aires",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+        }).formatToParts(new Date());
+
+        const d = Object.fromEntries(
+            partes.map(p => [p.type, p.value])
+        );
+
+        return `${d.year}-${d.month}-${d.day}`;
+    }
+
+    function suscripcionVigente(r) {
+
+        const hoy = hoyComercial();
+
+        return r.estado === "activo" &&
+            (!r.fecha_inicio || r.fecha_inicio <= hoy) &&
+            (!r.fecha_vencimiento || r.fecha_vencimiento >= hoy) &&
+            empresas.some(e =>
+                e.id === r.empresa_id && e.estado === "activo"
+            );
+    }
+
+    function personalizada(r, plan) {
+
+        if (!plan) return false;
+
+        const distintos = (a, b) =>
+            a == null || b == null
+                ? a !== b
+                : Number(a) !== Number(b);
+
+        return distintos(r.max_vehiculos, plan.max_vehiculos) ||
+            distintos(
+                r.max_usuarios_administrativos,
+                plan.max_usuarios_administrativos
+            ) ||
+            distintos(r.importe_mensual, plan.precio_mensual) ||
+            r.moneda !== plan.moneda;
+    }
+
+    function ocupacionEmpresa(id) {
+
+        return {
+
+            vehiculos: comercialVehiculos.filter(v =>
+                v.empresa_id === id &&
+                ["activo", "mantenimiento"].includes(v.estado)
+            ).length,
+
+            usuarios: comercialUsuarios.filter(u =>
+                u.empresa_id === id &&
+                u.activo &&
+                ["administrador", "operador", "supervisor"]
+                    .includes(u.rol)
+            ).length
+        };
+    }
+
+    function resumenPlan(plan) {
+
+        const lista = comercialSuscripciones.filter(s =>
+            s.plan_id === plan.id && suscripcionVigente(s)
+        );
+
+        const resultado = {
+            lista,
+            empresas: new Set(lista.map(s => s.empresa_id)).size,
+            vehiculos: 0,
+            vehiculosUsados: 0,
+            usuarios: 0,
+            usuariosUsados: 0,
+            importes: {},
+            sinImporte: 0
+        };
+
+        for (const r of lista) {
+
+            const ocupacion = ocupacionEmpresa(r.empresa_id);
+
+            resultado.vehiculos += Number(r.max_vehiculos || 0);
+            resultado.usuarios += Number(r.max_usuarios_administrativos || 0);
+
+            resultado.vehiculosUsados += ocupacion.vehiculos;
+            resultado.usuariosUsados += ocupacion.usuarios;
+
+            if (r.importe_mensual == null) {
+                resultado.sinImporte++;
+            } else {
+
+                const m = r.moneda || "ARS";
+
+                resultado.importes[m] =
+                    (resultado.importes[m] || 0) +
+                    Number(r.importe_mensual);
+            }
+        }
+
+        return resultado;
+    }
+
+    function importeProyectado(resumen) {
+
+        return Object.entries(resumen.importes)
+            .map(([m, importe]) =>
+                m + " " + moneda(importe, m)
+            ).join(" · ") || "Sin importe informado";
+    }
+
+    function porcentajeOcupacion(usados, autorizados) {
+
+        return autorizados
+            ? (usados / autorizados * 100).toLocaleString(
+                "es-AR", {maximumFractionDigits: 1}
+            ) + "%"
+            : "—";
+    }
+
+    function detalleComercialPlan(plan) {
+
+        const resumen = resumenPlan(plan);
+
+        const filas = resumen.lista.map(r => {
+
+            const o = ocupacionEmpresa(r.empresa_id);
+
+            const tipo = personalizada(r, plan)
+                ? '<span class="comercial-personalizado">Difiere del plan</span>'
+                : '<span class="comercial-estandar">Estándar</span>';
+
+            return `
+                <tr>
+                    <td>${esc(empresaNombre(r.empresa_id))}</td>
+
+                    <td>${esc(moneda(r.importe_mensual, r.moneda))}</td>
+
+                    <td>${esc(fecha(r.fecha_vencimiento))}</td>
+
+                    <td>${o.vehiculos} / ${Number(r.max_vehiculos || 0)}</td>
+
+                    <td>${o.usuarios} / ${Number(r.max_usuarios_administrativos || 0)}</td>
+
+                    <td>${tipo}</td>
+
+                    <td>
+                        <button type="button"
+                                class="abm-accion historial"
+                                data-suscripcion="${esc(r.id)}">
+                            Ver suscripción
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join("");
+
+        formulario(
+            "Análisis comercial · " + plan.nombre,
+            [`
+                <div class="abm-ancho">
+
+                    <div class="comercial-tarjetas">
+
+                        <div>
+                            <small>Empresas vigentes</small>
+                            <strong>${resumen.empresas}</strong>
+                        </div>
+
+                        <div>
+                            <small>Vehículos utilizados / autorizados</small>
+                            <strong>${resumen.vehiculosUsados} / ${resumen.vehiculos}</strong>
+                        </div>
+
+                        <div>
+                            <small>Cupos de vehículos disponibles</small>
+                            <strong>${resumen.vehiculos - resumen.vehiculosUsados}</strong>
+                        </div>
+
+                        <div>
+                            <small>Ocupación de vehículos</small>
+                            <strong>${porcentajeOcupacion(
+                                resumen.vehiculosUsados,
+                                resumen.vehiculos
+                            )}</strong>
+                        </div>
+
+                        <div>
+                            <small>Usuarios administrativos</small>
+                            <strong>${resumen.usuariosUsados} / ${resumen.usuarios}</strong>
+                        </div>
+
+                        <div>
+                            <small>Cupos administrativos disponibles</small>
+                            <strong>${resumen.usuarios - resumen.usuariosUsados}</strong>
+                        </div>
+
+                    </div>
+
+                    <div class="comercial-proyeccion">
+
+                        <small>Abonos mensuales proyectados</small>
+
+                        <strong>${esc(importeProyectado(resumen))}</strong>
+
+                        ${resumen.sinImporte
+                            ? `<p>${resumen.sinImporte} suscripciones sin importe informado.</p>`
+                            : ""}
+
+                    </div>
+
+                    <h3>Empresas con suscripción vigente</h3>
+
+                    ${filas ? `
+                    <div class="tabla-contenedor">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Empresa</th>
+                                    <th>Abono</th>
+                                    <th>Vencimiento</th>
+                                    <th>Vehículos</th>
+                                    <th>Usuarios</th>
+                                    <th>Condiciones</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>${filas}</tbody>
+                        </table>
+                    </div>
+                    ` : "<p>No hay empresas vigentes con este plan.</p>"}
+
+                    <p class="abm-ayuda">
+                        Los importes son proyecciones comerciales,
+                        no cobranzas efectivas.
+                        Las condiciones se comparan con el catálogo actual.
+                    </p>
+
+                </div>
+            `],
+            async () => {},
+            "Indicadores de suscripciones actualmente vigentes."
+        );
+
+        $("abmGuardar").hidden = true;
+        $("abmCancelar").textContent = "Cerrar";
+        $("abmFormulario").onsubmit = e => e.preventDefault();
+
+        $("abmCampos").querySelectorAll("[data-suscripcion]")
+            .forEach(b => {
+
+                b.onclick = async () => {
+
+                    const id = b.dataset.suscripcion;
+
+                    modal.close();
+
+                    await abrirSuscripcion(id);
+                };
+            });
+    }
+
+    async function abrirSuscripcion(id) {
+
+        const {data, error} = await db
+            .from("tracking_suscripciones")
+            .select("id,empresa_id")
+            .eq("id", id)
+            .maybeSingle();
+
+        if (error || !data) {
+
+            mensaje("No se pudo localizar la suscripción.", true);
+            return;
+        }
+
+        empresaSeleccionada = data.empresa_id;
+
+        await navegar("suscripciones");
+
+        if (seccion !== "suscripciones") return;
+
+        const r = registros.find(s => s.id === id);
+
+        if (r && r.estado === "activo") {
+
+            modificarSuscripcion(r);
+
+        } else if (r) {
+
+            mensaje(
+                "Suscripción localizada. Seleccioná una acción disponible según su estado."
+            );
+
+        }
+    }
+
+    const seccionesConHistorial = [
+        "empresas",
+        "planes",
+        "suscripciones",
+        "vehiculos",
+        "usuarios"
+    ];
+
+    function filaConHistorial(r) {
+
+
+        const celdas = fila(r);
+
+        if (seccion === "planes") {
+
+            const resumen = resumenPlan(r);
+
+            celdas.splice(celdas.length - 1, 0,
+
+                boton(
+                    String(resumen.empresas) + " empresas",
+                    "comercial-plan",
+                    r.id,
+                    "historial"
+                ),
+
+                esc(importeProyectado(resumen))
+            );
+        }
+
+        if (seccion === "suscripciones") {
+
+            const plan = planes.find(p => p.id === r.plan_id);
+
+            if (plan) {
+
+                celdas[1] += personalizada(r, plan)
+                    ? '<br><span class="comercial-personalizado">Difiere del plan</span>'
+                    : '<br><span class="comercial-estandar">Estándar</span>';
+            }
+        }
+
+        if (seccionesConHistorial.includes(seccion)) {
+
+            celdas[celdas.length - 1] += boton(
+                "◷ Historial",
+                "historial",
+                r.id,
+                "historial"
+            );
+        }
+
+        return celdas;
+    }
+
+    async function historialRegistro(r) {
+
+        if (ocupado) return;
+
+        const origen = seccion;
+        const versionInicial = version;
+
+        let nombre = r.razon_social ||
+                     r.nombre ||
+                     r.patente ||
+                     empresaNombre(r.empresa_id);
+
+        if (origen === "suscripciones") {
+            nombre = empresaNombre(r.empresa_id) +
+                     " / " + planNombre(r.plan_id);
+        }
+
+        formulario(
+            "Historial · " + nombre,
+            ['<div id="auditHistorial" class="abm-ancho">Consultando historial...</div>'],
+            async () => {},
+            "Operaciones registradas sobre este elemento."
+        );
+
+        $("abmGuardar").hidden = true;
+        $("abmCancelar").textContent = "Cerrar";
+        $("abmFormulario").onsubmit = e => e.preventDefault();
+
+        const destino = $("auditHistorial");
+
+        try {
+
+            const eventos = [];
+            const cantidad = 200;
+
+            for (let desde = 0; ; desde += cantidad) {
+
+                const {data, error} = await db
+                    .from("tracking_auditoria")
+                    .select("*")
+                    .eq("entidad_id", r.id)
+                    .order("fecha", {ascending: false})
+                    .order("id", {ascending: false})
+                    .range(desde, desde + cantidad - 1);
+
+                if (error) throw error;
+
+                if (!destino.isConnected ||
+                    !modal.open ||
+                    origen !== seccion ||
+                    versionInicial !== version) return;
+
+                eventos.push(...(data || []));
+
+                if (!data || data.length < cantidad) break;
+            }
+
+            if (!eventos.length) {
+
+                destino.textContent =
+                    "No hay operaciones históricas registradas.";
+
+                return;
+            }
+
+            const tarjetas = eventos.map((evento, i) => {
+
+                const fechaHora = new Date(evento.fecha)
+                    .toLocaleString("es-AR", {
+                        timeZone: "America/Argentina/Buenos_Aires"
+                    });
+
+                const motivo =
+                    evento.datos_nuevos?.motivo ||
+                    evento.datos_nuevos?.motivo_cancelacion ||
+                    evento.datos_anteriores?.motivo ||
+                    "";
+
+                return `
+                    <article class="historial-evento">
+
+                        <small>${esc(fechaHora)}</small>
+
+                        <h4>${esc(
+                            accionAuditoria(evento.accion)
+                        )}</h4>
+
+                        <p>${esc(
+                            entidadAuditoria(evento.entidad)
+                        )}</p>
+
+                        ${motivo
+                            ? `<p class="historial-motivo">${esc(motivo)}</p>`
+                            : ""}
+
+                        <button type="button"
+                                class="abm-accion historial"
+                                data-evento="${i}">
+                            Ver detalle
+                        </button>
+
+                    </article>
+                `;
+            }).join("");
+
+            destino.innerHTML = `
+                <div class="historial-total">
+                    ${eventos.length} operaciones registradas
+                </div>
+
+                <div class="historial-linea">
+                    ${tarjetas}
+                </div>
+            `;
+
+            destino.onclick = e => {
+
+                const b = e.target.closest("[data-evento]");
+
+                if (!b) return;
+
+                const evento = eventos[Number(b.dataset.evento)];
+
+                if (!evento) return;
+
+                detalleAuditoria(evento);
+
+                const volver = document.createElement("button");
+
+                volver.type = "button";
+                volver.className = "abm-accion historial";
+                volver.textContent = "← Volver al historial";
+
+                volver.onclick = () => historialRegistro(r);
+
+                $("abmCampos").appendChild(volver);
+            };
+
+        } catch (error) {
+
+            if (destino.isConnected && modal.open) {
+                destino.textContent =
+                    "No se pudo consultar el historial: " +
+                    (error.message || "Error de conexión");
+            }
+        }
+    }
+
     function dibujarTabla() {
 
         const zona = $("abmTabla");
@@ -2264,7 +2984,24 @@ export function instalarABM({db, navegar, mensaje}) {
         const filtroEstado = $("abmEstado")
             ?.value || "";
 
+        // GCC V3 - FILTROS INTELIGENTES
+
+        const tipoUsuario = $("abmTipoUsuario")?.value || "";
+
         const lista = registros.filter(r => {
+
+            if (seccion === "usuarios") {
+
+                if (tipoUsuario === "administrativos" &&
+                    !["administrador","operador","supervisor"]
+                        .includes(r.rol))
+                    return false;
+
+                if (tipoUsuario === "choferes" &&
+                    r.rol !== "chofer")
+                    return false;
+            }
+
 
             if (
 
@@ -2287,7 +3024,19 @@ export function instalarABM({db, navegar, mensaje}) {
 
                     : String(r.activo);
 
-                if (valor !== filtroEstado)
+                if (seccion === "vehiculos" &&
+                    filtroEstado === "habilitados") {
+
+                    if (!["activo","mantenimiento"].includes(r.estado))
+                        return false;
+
+                } else if (seccion === "suscripciones" &&
+                           filtroEstado === "vigentes") {
+
+                    if (!suscripcionVigente(r))
+                        return false;
+
+                } else if (valor !== filtroEstado)
 
                     return false;
 
@@ -2351,7 +3100,7 @@ export function instalarABM({db, navegar, mensaje}) {
 
                             '<tr>' +
 
-                            fila(r).map(c =>
+                            filaConHistorial(r).map(c =>
 
                                 '<td>' + c + '</td>'
 
@@ -2485,7 +3234,221 @@ export function instalarABM({db, navegar, mensaje}) {
     // CARGA DEL MÓDULO
     // =========================================
 
-    async function mostrar(id) {
+
+    // GCC V3 - INFORME DE ABONOS
+
+    async function mostrarAbonos() {
+
+        const consulta = ++version;
+        seccion = "abonos";
+
+        const datos = await Promise.all([
+            consultar("tracking_empresas"),
+            consultar("tracking_planes"),
+            consultar("tracking_suscripciones")
+        ]);
+
+        if (consulta !== version) return;
+
+        empresas = datos[0];
+        planes = datos[1];
+
+        const lista = datos[2]
+            .filter(suscripcionVigente)
+            .sort((a,b) =>
+                empresaNombre(a.empresa_id).localeCompare(
+                    empresaNombre(b.empresa_id), "es"
+                )
+            );
+
+        const resumen = {
+            empresas: new Set(
+                lista.map(r => r.empresa_id)
+            ).size,
+            vehiculos: 0,
+            usuarios: 0,
+            importes: Object.create(null),
+            sinImporte: 0
+        };
+
+        for (const r of lista) {
+
+            resumen.vehiculos += Number(r.max_vehiculos || 0);
+
+            resumen.usuarios +=
+                Number(r.max_usuarios_administrativos || 0);
+
+            if (r.importe_mensual == null) {
+
+                resumen.sinImporte++;
+
+            } else {
+
+                const m = r.moneda || "ARS";
+
+                resumen.importes[m] =
+                    (resumen.importes[m] || 0) +
+                    Number(r.importe_mensual);
+            }
+        }
+
+        const filas = lista.map(r => `
+
+            <tr>
+                <td><strong>${esc(empresaNombre(r.empresa_id))}</strong></td>
+
+                <td>${esc(planNombre(r.plan_id))}</td>
+
+                <td>${Number(r.max_vehiculos || 0)}</td>
+
+                <td>${Number(r.max_usuarios_administrativos || 0)}</td>
+
+                <td class="abono-importe">
+                    ${r.importe_mensual == null
+                        ? "Sin informar"
+                        : esc((r.moneda || "ARS") + " " +
+                            moneda(r.importe_mensual, r.moneda || "ARS"))}
+                </td>
+
+                <td>${esc(fecha(r.fecha_vencimiento))}</td>
+
+                <td>
+                    <button type="button"
+                            class="abm-accion historial"
+                            data-abono-suscripcion="${esc(r.id)}">
+                        Ver suscripción
+                    </button>
+                </td>
+            </tr>
+
+        `).join("");
+
+        $("contenidoPagina").innerHTML = `
+
+            <section class="panel">
+
+                <div class="abonos-cabecera">
+
+                    <div>
+                        <h3>Proyección mensual de ingresos</h3>
+                        <p>Suscripciones vigentes de empresas autorizadas</p>
+                    </div>
+
+                    <button type="button"
+                            id="abonosVolver"
+                            class="abm-accion historial">
+                        ← Volver al inicio
+                    </button>
+
+                </div>
+
+                <div class="abonos-indicadores">
+
+                    <div class="abono-indicador">
+                        <small>Empresas autorizadas</small>
+                        <strong>${resumen.empresas}</strong>
+                    </div>
+
+                    <div class="abono-indicador">
+                        <small>Vehículos contratados</small>
+                        <strong>${resumen.vehiculos}</strong>
+                    </div>
+
+                    <div class="abono-indicador">
+                        <small>Usuarios contratados</small>
+                        <strong>${resumen.usuarios}</strong>
+                    </div>
+
+                    <div class="abono-indicador destacado">
+                        <small>Total mensual proyectado</small>
+                        <strong>${esc(importeProyectado(resumen))}</strong>
+                    </div>
+
+                </div>
+
+                <h3>Detalle de abonos por empresa</h3>
+
+                ${filas ? `
+
+                    <div class="tabla-contenedor">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Empresa</th>
+                                    <th>Plan</th>
+                                    <th>Vehículos</th>
+                                    <th>Usuarios</th>
+                                    <th>Abono mensual</th>
+                                    <th>Vencimiento</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>${filas}</tbody>
+
+                        </table>
+                    </div>
+
+                ` : '<div class="vacio">No hay suscripciones vigentes.</div>'}
+
+                <div class="abonos-total">
+
+                    <span>TOTAL MENSUAL PROYECTADO</span>
+
+                    <strong>${esc(importeProyectado(resumen))}</strong>
+
+                </div>
+
+                ${resumen.sinImporte
+                    ? `<p class="abm-ayuda">
+                        Atención: ${resumen.sinImporte} suscripciones
+                        sin importe informado.
+                       </p>`
+                    : ""}
+
+                <p class="abm-ayuda">
+                    Los importes corresponden a abonos contratados,
+                    no a cobranzas efectivas.
+                    Los totales se expresan por moneda.
+                </p>
+
+            </section>
+        `;
+
+        $("abonosVolver").onclick = () => navegar("inicio");
+
+        $("contenidoPagina")
+            .querySelectorAll("[data-abono-suscripcion]")
+            .forEach(b => {
+
+                b.onclick = async () => {
+
+                    if (b.disabled) return;
+
+                    b.disabled = true;
+
+                    try {
+
+                        await abrirSuscripcion(
+                            b.dataset.abonoSuscripcion
+                        );
+
+                    } catch (error) {
+
+                        mensaje(
+                            "No se pudo abrir la suscripción.",
+                            true
+                        );
+
+                    } finally {
+
+                        b.disabled = false;
+                    }
+                };
+            });
+    }
+
+    async function mostrar(id, indicador = "") {
 
         if (!configuracion[id]) {
 
@@ -2543,6 +3506,15 @@ export function instalarABM({db, navegar, mensaje}) {
 
         }
 
+        if (id === "planes") {
+
+            tareas.push(
+                consultar("tracking_suscripciones"),
+                consultar("tracking_vehiculos"),
+                consultar("tracking_usuarios")
+            );
+        }
+
         const datos = await Promise.all(tareas);
 
         if (consulta !== version) return true;
@@ -2552,6 +3524,10 @@ export function instalarABM({db, navegar, mensaje}) {
         planes = datos[1];
 
         registros = datos[2];
+
+        comercialSuscripciones = datos[3] || [];
+        comercialVehiculos = datos[4] || [];
+        comercialUsuarios = datos[5] || [];
 
         const filtrarEmpresa = [
 
@@ -2566,6 +3542,9 @@ export function instalarABM({db, navegar, mensaje}) {
             "auditoria"
 
         ].includes(id);
+
+        if (indicador || id === "usuarios")
+            empresaSeleccionada = "";
 
         if (!filtrarEmpresa)
 
@@ -2582,6 +3561,20 @@ export function instalarABM({db, navegar, mensaje}) {
         $("contenidoPagina").innerHTML = `
 
             <section class="panel">
+
+                <!-- GCC V3 - REGRESO UNIVERSAL -->
+
+                <div class="abonos-cabecera">
+
+                    <div></div>
+
+                    <button type="button"
+                            id="abmVolverInicio"
+                            class="abm-accion historial">
+                        ← Volver al inicio
+                    </button>
+
+                </div>
 
                 <div class="abm-barra">
 
@@ -2629,13 +3622,34 @@ export function instalarABM({db, navegar, mensaje}) {
                                 Todos los estados
                             </option>
 
-                            ${opcionesEstado()}
+                            ${id === "vehiculos"
+        ? '<option value="habilitados">Habilitados</option>'
+        : ""}
+
+    ${id === "suscripciones"
+        ? '<option value="vigentes">Vigentes y autorizadas</option>'
+        : ""}
+
+    ${opcionesEstado()}
 
                         </select>
 
                     ` : ""}
 
-                    ${configuracion[id].nuevo ? `
+                    ${id === "usuarios" ? `
+
+        <select id="abmTipoUsuario"
+                aria-label="Tipo de usuario">
+
+            <option value="">Todos los usuarios</option>
+            <option value="administrativos">Administrativos</option>
+            <option value="choferes">Choferes</option>
+
+        </select>
+
+    ` : ""}
+
+    ${configuracion[id].nuevo ? `
 
                         <button id="abmNuevo"
                                 class="abm-nuevo"
@@ -2663,7 +3677,31 @@ export function instalarABM({db, navegar, mensaje}) {
 
             $("abmNuevo").onclick = nuevo;
 
+        $("abmVolverInicio").onclick =
+            () => navegar("inicio");
+
         $("abmBuscar").oninput = dibujarTabla;
+
+        if ($("abmTipoUsuario")) {
+
+            $("abmTipoUsuario").onchange = dibujarTabla;
+
+            if (indicador === "usuarios")
+                $("abmTipoUsuario").value = "administrativos";
+        }
+
+        if ($("abmEstado")) {
+
+            const filtrosIniciales = {
+                usuarios: "true",
+                vehiculos: "habilitados",
+                suscripciones: "vigentes"
+            };
+
+            $("abmEstado").value =
+                filtrosIniciales[indicador] || "";
+        }
+
 
         if ($("abmEstado"))
 
@@ -2700,6 +3738,9 @@ export function instalarABM({db, navegar, mensaje}) {
     return {
 
         mostrar,
+
+        abrirSuscripcion,
+        mostrarAbonos,
 
         invalidar() {
 

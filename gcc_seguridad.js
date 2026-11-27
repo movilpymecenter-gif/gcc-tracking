@@ -53,19 +53,50 @@ export function instalarSeguridad({
             headers.Authorization = `Bearer ${token}`;
         }
 
-        const respuesta = await fetch(
+        const controlador = new AbortController();
+
+        const temporizador = setTimeout(
+            () => controlador.abort(),
+            20000
+        );
+
+        let respuesta;
+        let texto;
+
+        try {
+
+        respuesta = await fetch(
             `${supabaseUrl}/auth/v1/${ruta}`,
             {
                 method: metodo,
                 headers,
                 cache: "no-store",
+                signal: controlador.signal,
                 body: datos === null
                     ? undefined
                     : JSON.stringify(datos)
             }
         );
 
-        const texto = await respuesta.text();
+        texto = await respuesta.text();
+
+        } catch (error) {
+
+            if (error.name === "AbortError") {
+                throw new Error(
+                    "El servidor demoró demasiado. Verificá la conexión."
+                );
+            }
+
+            throw new Error(
+                "No se pudo conectar con el servicio de seguridad."
+            );
+
+        } finally {
+
+            clearTimeout(temporizador);
+
+        }
 
         let resultado = {};
 
@@ -77,17 +108,47 @@ export function instalarSeguridad({
 
         if (!respuesta.ok) {
 
+
+
             if (respuesta.status === 429) {
                 throw new Error(
                     "Demasiados intentos. Esperá unos minutos."
                 );
             }
 
+            if (ruta === "recover") {
+
+                if ([400, 404, 422].includes(respuesta.status)) {
+                    return {};
+                }
+
+                throw new Error(
+                    "El servicio de recuperación no está disponible. Intentá más tarde."
+                );
+            }
+
+            if (ruta === "verify") {
+                throw new Error(
+                    respuesta.status >= 500
+                        ? "El servicio de recuperación no está disponible."
+                        : "El código es incorrecto, venció o ya fue utilizado."
+                );
+            }
+
+            if ((resultado.error_code || resultado.code) === "same_password") {
+                throw new Error(
+                    "La nueva contraseña debe ser diferente de la anterior."
+                );
+            }
+
+            if ((resultado.error_code || resultado.code) === "weak_password") {
+                throw new Error(
+                    "La contraseña no cumple los requisitos de seguridad."
+                );
+            }
+
             throw new Error(
-                resultado.msg ||
-                resultado.message ||
-                resultado.error_description ||
-                "No se pudo completar la operación."
+                "No se pudo completar la operación de seguridad."
             );
 
         }
@@ -117,6 +178,7 @@ export function instalarSeguridad({
         }
 
         solicitudEnCurso = true;
+        ultimaSolicitud = Date.now();
 
         try {
 
@@ -197,12 +259,23 @@ export function instalarSeguridad({
 
             }
 
-            await solicitar(
-                "user",
-                "PUT",
-                { password: clave },
-                tokenTemporal
-            );
+            try {
+
+                await solicitar(
+                    "user",
+                    "PUT",
+                    { password: clave },
+                    tokenTemporal
+                );
+
+            } catch (error) {
+
+                throw new Error(
+                    error.message +
+                    " El código ya fue validado. Si no podés ingresar con la nueva contraseña, solicitá otro código."
+                );
+
+            }
 
             return {
                 ok: true,
@@ -322,7 +395,10 @@ export function instalarSeguridad({
             await solicitar(
                 "user",
                 "PUT",
-                { password: claveNueva },
+                {
+                    current_password: claveActual,
+                    password: claveNueva
+                },
                 tokenTemporal
             );
 
